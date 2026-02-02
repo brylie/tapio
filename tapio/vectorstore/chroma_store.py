@@ -6,6 +6,7 @@ from typing import Any
 from chromadb import GetResult, QueryResult  # type: ignore[import-not-found]
 from langchain_chroma import Chroma  # type: ignore[import-not-found]
 from langchain_core.documents import Document  # type: ignore[import-not-found]
+from langchain_core.embeddings import Embeddings  # type: ignore[import-not-found]
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ class ChromaStore:
     def __init__(
         self,
         collection_name: str,
-        embeddings: Any,
+        embeddings: Embeddings,
         persist_directory: str = "chroma_db",
     ) -> None:
         """Initialize the ChromaDB vector store.
