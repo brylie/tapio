@@ -38,6 +38,7 @@ class TestParser(unittest.TestCase):
         # Prepare input/output dir paths as used by Parser
         from tapio.config.settings import DEFAULT_DIRS
 
+        self.DEFAULT_DIRS = DEFAULT_DIRS
         self.input_dir = os.path.join(self.temp_dir, self.site_name, DEFAULT_DIRS["CRAWLED_DIR"])
         self.output_dir = os.path.join(self.temp_dir, self.site_name, DEFAULT_DIRS["PARSED_DIR"])
         os.makedirs(self.input_dir, exist_ok=True)
@@ -232,10 +233,12 @@ class TestParser(unittest.TestCase):
         no_fallback_config = config_manager.get_site_config(self.no_fallback_site_name)
 
         # Prepare input/output directories for no_fallback site
-        from tapio.config.settings import DEFAULT_DIRS
-
-        no_fallback_input_dir = os.path.join(self.temp_dir, self.no_fallback_site_name, DEFAULT_DIRS["CRAWLED_DIR"])
-        no_fallback_output_dir = os.path.join(self.temp_dir, self.no_fallback_site_name, DEFAULT_DIRS["PARSED_DIR"])
+        no_fallback_input_dir = os.path.join(
+            self.temp_dir, self.no_fallback_site_name, self.DEFAULT_DIRS["CRAWLED_DIR"]
+        )
+        no_fallback_output_dir = os.path.join(
+            self.temp_dir, self.no_fallback_site_name, self.DEFAULT_DIRS["PARSED_DIR"]
+        )
         os.makedirs(no_fallback_input_dir, exist_ok=True)
         os.makedirs(no_fallback_output_dir, exist_ok=True)
 
