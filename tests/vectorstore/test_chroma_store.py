@@ -239,7 +239,8 @@ class TestChromaStore:
         assert "citation_url" in result["metadatas"][0]
         assert result["metadatas"][0]["citation_url"] == "https://example.com/doc"
 
-    def test_enhance_document_with_citation(self, mock_embeddings):
+    @patch("tapio.vectorstore.chroma_store.Chroma")
+    def test_enhance_document_with_citation(self, mock_chroma, mock_embeddings):
         """Test enhancing a document with citation information."""
         # Initialize ChromaStore with injected embeddings
         store = ChromaStore(
