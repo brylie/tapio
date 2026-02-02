@@ -206,14 +206,14 @@ def parse(
             # Parse a specific site
             if site in available_sites:
                 typer.echo(f"🔧 Using configuration for site: {site}")
-                
+
                 # Get site config from config manager
                 site_config = config_manager.get_site_config(site)
-                
+
                 # Determine input and output directories
                 input_dir = os.path.join(DEFAULT_CONTENT_DIR, site, DEFAULT_DIRS["CRAWLED_DIR"])
                 output_dir = os.path.join(DEFAULT_CONTENT_DIR, site, DEFAULT_DIRS["PARSED_DIR"])
-                
+
                 # Create parser with dependency injection
                 parser = Parser(
                     site_name=site,
@@ -271,11 +271,11 @@ def parse(
                 typer.echo(f"🔧 Parsing site: {site_name}")
                 # Get site configuration
                 site_config = config_manager.get_site_config(site_name)
-                
+
                 # Build directory paths
                 input_dir = os.path.join(DEFAULT_CONTENT_DIR, site_name, DEFAULT_DIRS["CRAWLED_DIR"])
                 output_dir = os.path.join(DEFAULT_CONTENT_DIR, site_name, DEFAULT_DIRS["PARSED_DIR"])
-                
+
                 # Create parser with injected dependencies
                 parser = Parser(
                     site_name=site_name,
@@ -370,7 +370,7 @@ def vectorize(
             embedding_function=embeddings,
             persist_directory=db_dir,
         )
-        
+
         # Initialize vectorizer with injected dependencies
         vectorizer = MarkdownVectorizer(
             vector_db=vector_db,
@@ -493,7 +493,7 @@ def tapio_app(
             max_tokens=max_tokens,
             num_results=DEFAULT_NUM_RESULTS,
         )
-        
+
         # Create RAG orchestrator using factory
         factory = RAGOrchestratorFactory(rag_config)
         orchestrator = factory.create_orchestrator()

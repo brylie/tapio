@@ -19,22 +19,22 @@ sys.path.insert(0, str(root_dir))
 @pytest.fixture
 def mock_embeddings():
     """Mock HuggingFace embeddings for fast unit tests.
-    
+
     Returns a mock with embed_query and embed_documents methods that return
     consistent dummy embeddings without loading a real model.
     """
     embeddings = Mock()
     # Typical embedding dimension for all-MiniLM-L6-v2 is 384
     dummy_embedding = [0.1] * 384
-    
+
     # embed_query returns a single embedding
     embeddings.embed_query.return_value = dummy_embedding
-    
+
     # embed_documents returns a list of embeddings (one per document)
     # Make it return the appropriate number based on input
     def embed_documents_mock(texts):
         return [dummy_embedding for _ in texts]
-    
+
     embeddings.embed_documents.side_effect = embed_documents_mock
     return embeddings
 
@@ -63,12 +63,12 @@ def mock_llm_service():
 def mock_doc_retrieval_service():
     """Mock DocumentRetrievalService for unit tests."""
     service = Mock()
-    
+
     # Create mock documents
     mock_doc = Mock()
     mock_doc.page_content = "Test document content"
     mock_doc.metadata = {"source": "test.md", "url": "https://example.com"}
-    
+
     service.retrieve_documents.return_value = [mock_doc]
     service.format_documents_as_context.return_value = "Test document content"
     return service
@@ -78,12 +78,12 @@ def mock_doc_retrieval_service():
 def mock_rag_orchestrator():
     """Mock RAGOrchestrator for unit tests."""
     orchestrator = Mock()
-    
+
     # Create mock documents
     mock_doc = Mock()
     mock_doc.page_content = "Test document content"
     mock_doc.metadata = {"source": "test.md", "url": "https://example.com"}
-    
+
     orchestrator.query.return_value = ("Mocked response", [mock_doc])
     orchestrator.query_stream.return_value = (iter(["Mocked ", "response"]), [mock_doc])
     orchestrator.check_model_availability.return_value = True
@@ -94,11 +94,11 @@ def mock_rag_orchestrator():
 @pytest.fixture
 def test_config_manager(tmp_path):
     """ConfigManager with test configuration.
-    
+
     Creates a temporary YAML config file with test site configuration.
     """
     from tapio.config.config_manager import ConfigManager
-    
+
     config_yaml = tmp_path / "test_config.yaml"
     config_yaml.write_text("""
 sites:
@@ -134,7 +134,4 @@ def tmp_chroma_db(tmp_path):
 
 def pytest_configure(config):
     """Add custom markers for pytest."""
-    config.addinivalue_line(
-        "markers", "integration: mark test as integration test (uses real embeddings, slower)"
-    )
-
+    config.addinivalue_line("markers", "integration: mark test as integration test (uses real embeddings, slower)")

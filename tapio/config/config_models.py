@@ -149,4 +149,3 @@ class RAGConfig:
     llm_model_name: str = "llama3.2"
     max_tokens: int = 1024
     num_results: int = 5
-

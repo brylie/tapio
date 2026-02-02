@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 class MarkdownVectorizer:
     """Vectorize markdown content and store in ChromaDB using LangChain.
-    
+
     This class handles the vectorization pipeline for markdown documents,
     including text splitting and storage in a vector database. Dependencies
     are injected to enable testing and configuration flexibility.
@@ -31,12 +31,12 @@ class MarkdownVectorizer:
         Args:
             vector_db: LangChain Chroma instance for vector storage
             text_splitter: MarkdownTextSplitter for chunking documents
-            
+
         Example:
             >>> from langchain_chroma import Chroma
             >>> from langchain_huggingface import HuggingFaceEmbeddings
             >>> from langchain_text_splitters import MarkdownTextSplitter
-            >>> 
+            >>>
             >>> embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
             >>> vector_db = Chroma(
             ...     collection_name="my_docs",

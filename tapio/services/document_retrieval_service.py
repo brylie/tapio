@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class DocumentRetrievalService:
     """Service for retrieving relevant documents from the vector store.
-    
+
     This service handles document retrieval from a vector store and formats
     the results for use in RAG workflows. The vector store is injected to
     enable testing and allow reuse of existing store instances.
@@ -27,11 +27,11 @@ class DocumentRetrievalService:
         Args:
             vector_store: ChromaStore instance for document retrieval
             num_results: Number of documents to retrieve from the vector store
-            
+
         Example:
             >>> from tapio.vectorstore.chroma_store import ChromaStore
             >>> from langchain_huggingface import HuggingFaceEmbeddings
-            >>> 
+            >>>
             >>> embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
             >>> store = ChromaStore("my_docs", embeddings)
             >>> service = DocumentRetrievalService(vector_store=store, num_results=3)

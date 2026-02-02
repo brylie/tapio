@@ -88,7 +88,7 @@ class TestRelativeLinks(unittest.TestCase):
 
         # Create config manager and get site config
         from tapio.config.config_manager import ConfigManager
-        
+
         config_manager = ConfigManager(self.config_path)
         site_config = config_manager.get_site_config("test_site")
 
@@ -204,10 +204,10 @@ class TestRelativeLinks(unittest.TestCase):
 
         # Create a new parser with the updated config using dependency injection
         from tapio.config.config_manager import ConfigManager
-        
+
         config_manager = ConfigManager(self.config_path)
         site_config = config_manager.get_site_config("test_site")
-        
+
         parser = Parser(
             site_name="test_site",
             site_config=site_config,

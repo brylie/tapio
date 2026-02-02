@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class ChromaStore:
     """LangChain-based ChromaDB vector store abstraction.
-    
+
     This class wraps LangChain's Chroma implementation with a simpler interface.
     Dependencies are injected to allow for testing and configuration flexibility.
     """
@@ -29,7 +29,7 @@ class ChromaStore:
             collection_name: Name of the ChromaDB collection
             embeddings: Embeddings instance (e.g., HuggingFaceEmbeddings)
             persist_directory: Directory to persist the ChromaDB database
-            
+
         Example:
             >>> from langchain_huggingface import HuggingFaceEmbeddings
             >>> embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")

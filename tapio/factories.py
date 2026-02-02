@@ -67,9 +67,7 @@ class RAGOrchestratorFactory:
             persist_directory=self.config.persist_directory,
         )
 
-    def create_document_retrieval_service(
-        self, chroma_store: ChromaStore | None = None
-    ) -> DocumentRetrievalService:
+    def create_document_retrieval_service(self, chroma_store: ChromaStore | None = None) -> DocumentRetrievalService:
         """Create document retrieval service.
 
         Args:

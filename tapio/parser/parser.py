@@ -85,11 +85,11 @@ class Parser:
             site_config: Site-specific configuration with selectors
             input_dir: Directory containing crawled HTML files
             output_dir: Directory for output markdown files
-            
+
         Example:
             >>> from tapio.config.config_manager import ConfigManager
             >>> from tapio.config import settings
-            >>> 
+            >>>
             >>> config_manager = ConfigManager()
             >>> site_config = config_manager.get_site_config("migri")
             >>> input_dir = os.path.join(settings.DEFAULT_CONTENT_DIR, "migri", "crawled")

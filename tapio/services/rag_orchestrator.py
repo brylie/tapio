@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class RAGOrchestrator:
     """Orchestrates document retrieval and LLM generation for RAG workflow.
-    
+
     This orchestrator coordinates the RAG pipeline by combining document retrieval
     with LLM generation. All dependencies are injected to enable testing and
     allow reuse of configured service instances.
@@ -30,15 +30,15 @@ class RAGOrchestrator:
         Args:
             doc_retrieval_service: Service for retrieving documents from vector store
             llm_service: Service for LLM generation
-            
+
         Example:
             >>> from tapio.factories import RAGOrchestratorFactory
             >>> from tapio.config.config_models import RAGConfig
-            >>> 
+            >>>
             >>> config = RAGConfig(collection_name="my_docs")
             >>> factory = RAGOrchestratorFactory(config)
             >>> orchestrator = factory.create_orchestrator()
-            >>> 
+            >>>
             >>> # Or manually for advanced use cases:
             >>> doc_service = DocumentRetrievalService(vector_store=my_store)
             >>> llm_service = LLMService(model_name="llama3.2")

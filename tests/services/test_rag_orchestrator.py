@@ -15,11 +15,11 @@ def rag_orchestrator(mock_doc_retrieval_service, mock_llm_service):
         doc_retrieval_service=mock_doc_retrieval_service,
         llm_service=mock_llm_service,
     )
-    
+
     # Store mocks for access in tests
     orchestrator.mock_doc_service = mock_doc_retrieval_service
     orchestrator.mock_llm_service = mock_llm_service
-    
+
     return orchestrator
 
 

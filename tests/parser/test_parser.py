@@ -142,7 +142,7 @@ class TestParser(unittest.TestCase):
 
         # Create config manager and get site config
         from tapio.config.config_manager import ConfigManager
-        
+
         config_manager = ConfigManager(self.config_path)
         site_config = config_manager.get_site_config(self.site_name)
 
@@ -189,7 +189,7 @@ class TestParser(unittest.TestCase):
     def test_init_with_invalid_site(self):
         """Test initialization with invalid site."""
         from tapio.config.config_manager import ConfigManager
-        
+
         config_manager = ConfigManager(self.config_path)
         with self.assertRaises(ValueError):
             config_manager.get_site_config("nonexistent")
@@ -234,14 +234,15 @@ class TestParser(unittest.TestCase):
         # Create parser with no fallback config
         config_manager = ConfigManager(self.config_path)
         no_fallback_config = config_manager.get_site_config(self.no_fallback_site_name)
-        
+
         # Prepare input/output directories for no_fallback site
         from tapio.config.settings import DEFAULT_DIRS
+
         no_fallback_input_dir = os.path.join(self.temp_dir, self.no_fallback_site_name, DEFAULT_DIRS["CRAWLED_DIR"])
         no_fallback_output_dir = os.path.join(self.temp_dir, self.no_fallback_site_name, DEFAULT_DIRS["PARSED_DIR"])
         os.makedirs(no_fallback_input_dir, exist_ok=True)
         os.makedirs(no_fallback_output_dir, exist_ok=True)
-        
+
         no_fallback_parser = Parser(
             site_name=self.no_fallback_site_name,
             site_config=no_fallback_config,

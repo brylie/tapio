@@ -80,7 +80,6 @@ class TestMarkdownVectorizer:
         mock_vector_db = Mock()
         mock_text_splitter = Mock()
 
-
         # Set up read_markdown_file to return test data
         mock_read_file.side_effect = [
             ({"title": "Test 1"}, "Content 1"),
@@ -281,4 +280,3 @@ class TestMarkdownVectorizer:
         assert enriched["url"] == "https://example.com/doc"
         assert enriched["source_url"] == "https://example.com/doc"
         assert enriched["citation_url"] == "https://example.com/doc"
-

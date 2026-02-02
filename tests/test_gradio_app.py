@@ -84,4 +84,3 @@ class TestGradioApp:
         mock_app_instance.check_model_availability.assert_called_once()
         # Even with model unavailable, the app should launch
         mock_app_instance.launch.assert_called_once()
-

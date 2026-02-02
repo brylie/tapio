@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 class TapioAssistantApp:
     """Class representing the Tapio Assistant Gradio application.
-    
+
     This class provides a web interface for interacting with the RAG system.
     The RAG orchestrator is injected to enable testing and configuration.
     """
@@ -28,11 +28,11 @@ class TapioAssistantApp:
 
         Args:
             rag_orchestrator: Configured RAG orchestrator for query handling
-            
+
         Example:
             >>> from tapio.factories import RAGOrchestratorFactory
             >>> from tapio.config.config_models import RAGConfig
-            >>> 
+            >>>
             >>> config = RAGConfig(llm_model_name="llama3.2")
             >>> factory = RAGOrchestratorFactory(config)
             >>> orchestrator = factory.create_orchestrator()
@@ -43,7 +43,7 @@ class TapioAssistantApp:
 
     def check_model_availability(self) -> None:
         """Check if the LLM model is available.
-        
+
         Raises:
             SystemExit: If the model is not available
         """
@@ -316,11 +316,11 @@ def main(
     Args:
         rag_orchestrator: Configured RAG orchestrator instance
         share: Whether to create a shareable link for the app
-        
+
     Example:
         >>> from tapio.factories import RAGOrchestratorFactory
         >>> from tapio.config.config_models import RAGConfig
-        >>> 
+        >>>
         >>> config = RAGConfig(llm_model_name="llama3.2")
         >>> factory = RAGOrchestratorFactory(config)
         >>> orchestrator = factory.create_orchestrator()
@@ -340,10 +340,8 @@ if __name__ == "__main__":
     # Create RAG orchestrator using factory for standalone execution
     from tapio.config.config_models import RAGConfig
     from tapio.factories import RAGOrchestratorFactory
-    
+
     config = RAGConfig()
     factory = RAGOrchestratorFactory(config=config)
     rag_orch = factory.create_orchestrator()
     main(rag_orchestrator=rag_orch)
-
-
