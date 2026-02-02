@@ -5,6 +5,7 @@ for the RAG system, making it easy to create properly configured service
 instances without tight coupling.
 """
 
+from langchain_core.embeddings import Embeddings  # type: ignore[import-not-found]
 from langchain_huggingface import HuggingFaceEmbeddings
 
 from tapio.config.config_models import RAGConfig
@@ -48,7 +49,7 @@ class RAGOrchestratorFactory:
         """
         return HuggingFaceEmbeddings(model_name=self.config.embedding_model_name)
 
-    def create_chroma_store(self, embeddings: HuggingFaceEmbeddings | None = None) -> ChromaStore:
+    def create_chroma_store(self, embeddings: Embeddings | None = None) -> ChromaStore:
         """Create ChromaDB vector store.
 
         Args:
