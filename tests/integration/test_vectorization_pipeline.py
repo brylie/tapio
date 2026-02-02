@@ -4,6 +4,7 @@ Tests the complete flow from markdown files to vector storage.
 """
 
 import pytest
+from langchain_chroma import Chroma  # type: ignore[import-not-found]
 from langchain_text_splitters import MarkdownTextSplitter  # type: ignore[import-not-found]
 
 from tapio.vectorstore.vectorizer import MarkdownVectorizer
@@ -56,8 +57,6 @@ Work permits require a job offer from a Finnish employer.
 """)
 
     # Create Chroma instance
-    from langchain_chroma import Chroma  # type: ignore[import-not-found]
-
     vector_db = Chroma(
         collection_name="test_vectorize",
         embedding_function=mock_embeddings,
@@ -99,8 +98,6 @@ def test_vectorizer_handles_empty_directory(tmp_path, tmp_chroma_db, mock_embedd
     empty_dir.mkdir()
 
     # Create Chroma instance
-    from langchain_chroma import Chroma  # type: ignore[import-not-found]
-
     vector_db = Chroma(
         collection_name="test_empty",
         embedding_function=mock_embeddings,
