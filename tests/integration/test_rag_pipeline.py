@@ -75,8 +75,6 @@ def test_rag_pipeline_end_to_end(tmp_chroma_db, mock_embeddings):
     )
 
     # Query the system
-    from unittest.mock import patch
-
     with patch("tapio.services.rag_orchestrator.load_prompt") as mock_load_prompt:
         mock_load_prompt.side_effect = ["You are a helpful assistant.", "Context: {context}\n\nQuestion: {question}"]
 
