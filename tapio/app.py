@@ -12,61 +12,44 @@ from tapio.services.rag_orchestrator import RAGOrchestrator
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Default constants (can be overridden by CLI)
-DEFAULT_COLLECTION_NAME = "migri_docs"
-DEFAULT_CHROMA_DB_PATH = "chroma_db"
-DEFAULT_MODEL_NAME = "llama3.2"
-DEFAULT_MAX_TOKENS = 1024
-DEFAULT_NUM_RESULTS = 5
-
 
 class TapioAssistantApp:
-    """Class representing the Tapio Assistant Gradio application."""
+    """Class representing the Tapio Assistant Gradio application.
+    
+    This class provides a web interface for interacting with the RAG system.
+    The RAG orchestrator is injected to enable testing and configuration.
+    """
 
     def __init__(
         self,
-        collection_name: str = DEFAULT_COLLECTION_NAME,
-        persist_directory: str = DEFAULT_CHROMA_DB_PATH,
-        model_name: str = DEFAULT_MODEL_NAME,
-        max_tokens: int = DEFAULT_MAX_TOKENS,
-        num_results: int = DEFAULT_NUM_RESULTS,
+        rag_orchestrator: RAGOrchestrator,
     ) -> None:
         """Initialize the Tapio Assistant application.
 
         Args:
-            collection_name: Name of the ChromaDB collection
-            persist_directory: Directory where the ChromaDB database is stored
-            model_name: Name of the LLM model to use
-            max_tokens: Maximum number of tokens to generate
-            num_results: Number of documents to retrieve from the vector store
+            rag_orchestrator: Configured RAG orchestrator for query handling
+            
+        Example:
+            >>> from tapio.factories import RAGOrchestratorFactory
+            >>> from tapio.config.config_models import RAGConfig
+            >>> 
+            >>> config = RAGConfig(llm_model_name="llama3.2")
+            >>> factory = RAGOrchestratorFactory(config)
+            >>> orchestrator = factory.create_orchestrator()
+            >>> app = TapioAssistantApp(rag_orchestrator=orchestrator)
         """
-        self.collection_name = collection_name
-        self.persist_directory = persist_directory
-        self.model_name = model_name
-        self.max_tokens = max_tokens
-        self.num_results = num_results
-        self.rag_orchestrator: RAGOrchestrator | None = None
+        self.rag_orchestrator = rag_orchestrator
         self.demo = self._build_interface()
 
-    def _init_rag_orchestrator(self) -> RAGOrchestrator:
-        """Initialize the RAG orchestrator if not already done.
-
-        Returns:
-            Initialized RAGOrchestrator instance
+    def check_model_availability(self) -> None:
+        """Check if the LLM model is available.
+        
+        Raises:
+            SystemExit: If the model is not available
         """
-        if self.rag_orchestrator is None:
-            logger.info(
-                f"Initializing RAG orchestrator with {self.model_name} model",
-            )
-            self.rag_orchestrator = RAGOrchestrator(
-                collection_name=self.collection_name,
-                persist_directory=self.persist_directory,
-                model_name=self.model_name,
-                max_tokens=self.max_tokens,
-                num_results=self.num_results,
-            )
-
-        return self.rag_orchestrator
+        if not self.rag_orchestrator.check_model_availability():
+            logger.error("Required LLM model is not available")
+            raise SystemExit(1)
 
     def generate_rag_response(
         self,
@@ -83,17 +66,14 @@ class TapioAssistantApp:
             Tuple containing the response and formatted documents for display
         """
         try:
-            # Initialize RAG orchestrator if not already done
-            orchestrator = self._init_rag_orchestrator()
-
             # Get response and retrieved docs from the RAG orchestrator
-            response, retrieved_docs = orchestrator.query(
+            response, retrieved_docs = self.rag_orchestrator.query(
                 query_text=query,
                 history=history,
             )
 
             # Format documents for display
-            formatted_docs = orchestrator.format_documents_for_display(
+            formatted_docs = self.rag_orchestrator.format_documents_for_display(
                 retrieved_docs,
             )
 
@@ -131,11 +111,8 @@ class TapioAssistantApp:
         yield "", chat_history, "Retrieving relevant documents..."
 
         try:
-            # Initialize RAG orchestrator if not already done
-            rag_orchestrator = self._init_rag_orchestrator()
-
             # Get streaming response and retrieved docs from the RAG orchestrator
-            response_stream, retrieved_docs = rag_orchestrator.query_stream(
+            response_stream, retrieved_docs = self.rag_orchestrator.query_stream(
                 query_text=message,
                 history=chat_history,
             )
@@ -178,7 +155,7 @@ class TapioAssistantApp:
 
                 # Format documents for display once we have them
                 if retrieved_docs and formatted_docs == "Retrieving relevant documents...":
-                    formatted_docs = rag_orchestrator.format_documents_for_display(
+                    formatted_docs = self.rag_orchestrator.format_documents_for_display(
                         retrieved_docs,
                     )
 
@@ -191,7 +168,7 @@ class TapioAssistantApp:
 
             # Ensure documents are formatted for final display
             if retrieved_docs:
-                formatted_docs = rag_orchestrator.format_documents_for_display(
+                formatted_docs = self.rag_orchestrator.format_documents_for_display(
                     retrieved_docs,
                 )
 
@@ -320,58 +297,37 @@ class TapioAssistantApp:
 
         return demo
 
-    def check_model_availability(self) -> bool:
-        """Check if the Ollama model is available.
-
-        Returns:
-            True if the model is available, False otherwise
-        """
-        orchestrator = self._init_rag_orchestrator()
-        return orchestrator.check_model_availability()
-
     def launch(self, share: bool = False) -> None:
         """Launch the Gradio app.
 
         Args:
             share: Whether to create a shareable link for the app
         """
-        # Check model availability
-        if not self.check_model_availability():
-            logger.warning(
-                f"Could not find {self.model_name} model in Ollama. "
-                f"The app will start, but responses may not work correctly.",
-            )
-
         # Launch the Gradio app
         self.demo.launch(share=share)
 
 
 def main(
-    collection_name: str = DEFAULT_COLLECTION_NAME,
-    persist_directory: str = DEFAULT_CHROMA_DB_PATH,
-    model_name: str = DEFAULT_MODEL_NAME,
-    max_tokens: int = DEFAULT_MAX_TOKENS,
-    num_results: int = DEFAULT_NUM_RESULTS,
+    rag_orchestrator: RAGOrchestrator,
     share: bool = False,
 ) -> None:
-    """Run the Tapio Assistant app with the specified parameters.
+    """Run the Tapio Assistant app with the specified RAG orchestrator.
 
     Args:
-        collection_name: Name of the ChromaDB collection
-        persist_directory: Directory where the ChromaDB database is stored
-        model_name: Name of the LLM model to use
-        max_tokens: Maximum number of tokens to generate
-        num_results: Number of documents to retrieve from the vector store
+        rag_orchestrator: Configured RAG orchestrator instance
         share: Whether to create a shareable link for the app
+        
+    Example:
+        >>> from tapio.factories import RAGOrchestratorFactory
+        >>> from tapio.config.config_models import RAGConfig
+        >>> 
+        >>> config = RAGConfig(llm_model_name="llama3.2")
+        >>> factory = RAGOrchestratorFactory(config)
+        >>> orchestrator = factory.create_orchestrator()
+        >>> main(rag_orchestrator=orchestrator, share=False)
     """
-    # Create the app
-    app = TapioAssistantApp(
-        collection_name=collection_name,
-        persist_directory=persist_directory,
-        model_name=model_name,
-        max_tokens=max_tokens,
-        num_results=num_results,
-    )
+    # Create the app with injected orchestrator
+    app = TapioAssistantApp(rag_orchestrator=rag_orchestrator)
 
     # Check model availability
     app.check_model_availability()
@@ -381,4 +337,13 @@ def main(
 
 
 if __name__ == "__main__":
-    main()
+    # Create RAG orchestrator using factory for standalone execution
+    from tapio.config.config_models import RAGConfig
+    from tapio.factories import RAGOrchestratorFactory
+    
+    config = RAGConfig()
+    factory = RAGOrchestratorFactory(config=config)
+    rag_orch = factory.create_orchestrator()
+    main(rag_orchestrator=rag_orch)
+
+

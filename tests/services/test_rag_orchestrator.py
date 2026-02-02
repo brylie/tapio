@@ -8,27 +8,19 @@ from tapio.services.rag_orchestrator import RAGOrchestrator
 
 
 @pytest.fixture
-def rag_orchestrator():
+def rag_orchestrator(mock_doc_retrieval_service, mock_llm_service):
     """Create a RAG orchestrator with mocked dependencies for testing."""
-    # Mock the DocumentRetrievalService and LLMService
-    with mock.patch("tapio.services.rag_orchestrator.DocumentRetrievalService") as mock_doc_service:
-        with mock.patch("tapio.services.rag_orchestrator.LLMService") as mock_llm:
-            # Configure mock instance behavior
-            mock_doc_service_instance = mock_doc_service.return_value
-            mock_llm_instance = mock_llm.return_value
-
-            # Create RAGOrchestrator with mocked dependencies
-            orchestrator = RAGOrchestrator(
-                collection_name="test_collection",
-                persist_directory="test_db",
-                model_name="test_model",
-            )
-
-            # Set mocked properties for access in tests
-            orchestrator.mock_doc_service = mock_doc_service_instance
-            orchestrator.mock_llm_service = mock_llm_instance
-
-            yield orchestrator
+    # Create RAGOrchestrator with injected mock dependencies
+    orchestrator = RAGOrchestrator(
+        doc_retrieval_service=mock_doc_retrieval_service,
+        llm_service=mock_llm_service,
+    )
+    
+    # Store mocks for access in tests
+    orchestrator.mock_doc_service = mock_doc_retrieval_service
+    orchestrator.mock_llm_service = mock_llm_service
+    
+    return orchestrator
 
 
 def test_rag_orchestrator_query(rag_orchestrator):
@@ -41,7 +33,7 @@ def test_rag_orchestrator_query(rag_orchestrator):
             "Mocked user prompt with context",  # For user_query
         ]
 
-        # Mock document retrieval
+        # Mock document retrieval (using fixture defaults)
         mock_doc = mock.MagicMock()
         mock_doc.page_content = "Test document content"
         rag_orchestrator.mock_doc_service.retrieve_documents.return_value = [

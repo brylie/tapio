@@ -11,37 +11,34 @@ class TestChromaStore:
     """Tests for the ChromaStore class."""
 
     @patch("tapio.vectorstore.chroma_store.Chroma")
-    @patch("tapio.vectorstore.chroma_store.HuggingFaceEmbeddings")
-    def test_init(self, mock_embeddings, mock_chroma):
+    def test_init(self, mock_chroma, mock_embeddings):
         """Test initialization of the ChromaStore."""
-        # Set up mocks
-        mock_embedding_instance = Mock()
-        mock_embeddings.return_value = mock_embedding_instance
-
-        # Initialize ChromaStore
+        # Initialize ChromaStore with injected embeddings
         _ = ChromaStore(
             collection_name="test_collection",
+            embeddings=mock_embeddings,
             persist_directory="test_dir",
         )
 
-        # Check if embeddings and vector_db were initialized correctly
-        mock_embeddings.assert_called_once_with(model_name="all-MiniLM-L6-v2")
+        # Check if vector_db was initialized correctly
         mock_chroma.assert_called_once_with(
             collection_name="test_collection",
-            embedding_function=mock_embedding_instance,
+            embedding_function=mock_embeddings,
             persist_directory="test_dir",
         )
 
     @patch("tapio.vectorstore.chroma_store.Chroma")
-    @patch("tapio.vectorstore.chroma_store.HuggingFaceEmbeddings")
-    def test_add_document_with_content(self, mock_embeddings, mock_chroma):
+    def test_add_document_with_content(self, mock_chroma, mock_embeddings):
         """Test adding a document with content in metadata."""
         # Set up mocks
         mock_vector_db = Mock()
         mock_chroma.return_value = mock_vector_db
 
-        # Initialize ChromaStore
-        store = ChromaStore(collection_name="test_collection")
+        # Initialize ChromaStore with injected embeddings
+        store = ChromaStore(
+            collection_name="test_collection",
+            embeddings=mock_embeddings,
+        )
 
         # Test adding document with content in metadata
         metadata = {"content": "Test document content"}
@@ -55,15 +52,17 @@ class TestChromaStore:
         )
 
     @patch("tapio.vectorstore.chroma_store.Chroma")
-    @patch("tapio.vectorstore.chroma_store.HuggingFaceEmbeddings")
-    def test_add_document_alternate_content_fields(self, mock_embeddings, mock_chroma):
+    def test_add_document_alternate_content_fields(self, mock_chroma, mock_embeddings):
         """Test adding a document with content in alternate metadata fields."""
         # Set up mocks
         mock_vector_db = Mock()
         mock_chroma.return_value = mock_vector_db
 
-        # Initialize ChromaStore
-        store = ChromaStore(collection_name="test_collection")
+        # Initialize ChromaStore with injected embeddings
+        store = ChromaStore(
+            collection_name="test_collection",
+            embeddings=mock_embeddings,
+        )
 
         # Test with different content field names
         for field in ["text", "body", "page_content", "full_text"]:
@@ -79,15 +78,17 @@ class TestChromaStore:
             )
 
     @patch("tapio.vectorstore.chroma_store.Chroma")
-    @patch("tapio.vectorstore.chroma_store.HuggingFaceEmbeddings")
-    def test_add_document_no_content(self, mock_embeddings, mock_chroma):
+    def test_add_document_no_content(self, mock_chroma, mock_embeddings):
         """Test adding a document with no content in metadata."""
         # Set up mocks
         mock_vector_db = Mock()
         mock_chroma.return_value = mock_vector_db
 
-        # Initialize ChromaStore
-        store = ChromaStore(collection_name="test_collection")
+        # Initialize ChromaStore with injected embeddings
+        store = ChromaStore(
+            collection_name="test_collection",
+            embeddings=mock_embeddings,
+        )
 
         # Test adding document with no content in metadata
         metadata = {"other_field": "Other value"}
@@ -101,16 +102,18 @@ class TestChromaStore:
         )
 
     @patch("tapio.vectorstore.chroma_store.Chroma")
-    @patch("tapio.vectorstore.chroma_store.HuggingFaceEmbeddings")
-    def test_add_document_exception(self, mock_embeddings, mock_chroma):
+    def test_add_document_exception(self, mock_chroma, mock_embeddings):
         """Test handling exceptions when adding a document."""
         # Set up mocks
         mock_vector_db = Mock()
         mock_vector_db.add_texts.side_effect = Exception("Test error")
         mock_chroma.return_value = mock_vector_db
 
-        # Initialize ChromaStore
-        store = ChromaStore(collection_name="test_collection")
+        # Initialize ChromaStore with injected embeddings
+        store = ChromaStore(
+            collection_name="test_collection",
+            embeddings=mock_embeddings,
+        )
 
         # Test adding document with exception
         metadata = {"content": "Test document content"}
@@ -118,8 +121,7 @@ class TestChromaStore:
             store.add_document(document_id="test_doc", metadata=metadata)
 
     @patch("tapio.vectorstore.chroma_store.Chroma")
-    @patch("tapio.vectorstore.chroma_store.HuggingFaceEmbeddings")
-    def test_query(self, mock_embeddings, mock_chroma):
+    def test_query(self, mock_chroma, mock_embeddings):
         """Test querying the vector store by text."""
         # Set up mocks
         mock_vector_db = Mock()
@@ -130,8 +132,11 @@ class TestChromaStore:
         mock_vector_db.similarity_search.return_value = [mock_doc1, mock_doc2]
         mock_chroma.return_value = mock_vector_db
 
-        # Initialize ChromaStore
-        store = ChromaStore(collection_name="test_collection")
+        # Initialize ChromaStore with injected embeddings
+        store = ChromaStore(
+            collection_name="test_collection",
+            embeddings=mock_embeddings,
+        )
 
         # Test query
         results = store.query(query_text="test query", n_results=2)
@@ -148,16 +153,18 @@ class TestChromaStore:
         assert mock_doc2.metadata["citation_url"] == "https://example.com/doc2"
 
     @patch("tapio.vectorstore.chroma_store.Chroma")
-    @patch("tapio.vectorstore.chroma_store.HuggingFaceEmbeddings")
-    def test_query_exception(self, mock_embeddings, mock_chroma):
+    def test_query_exception(self, mock_chroma, mock_embeddings):
         """Test handling exceptions when querying the vector store."""
         # Set up mocks
         mock_vector_db = Mock()
         mock_vector_db.similarity_search.side_effect = Exception("Test error")
         mock_chroma.return_value = mock_vector_db
 
-        # Initialize ChromaStore
-        store = ChromaStore(collection_name="test_collection")
+        # Initialize ChromaStore with injected embeddings
+        store = ChromaStore(
+            collection_name="test_collection",
+            embeddings=mock_embeddings,
+        )
 
         # Test query with exception
         results = store.query(query_text="test query")
@@ -166,8 +173,7 @@ class TestChromaStore:
         assert results == []
 
     @patch("tapio.vectorstore.chroma_store.Chroma")
-    @patch("tapio.vectorstore.chroma_store.HuggingFaceEmbeddings")
-    def test_query_with_embedding(self, mock_embeddings, mock_chroma):
+    def test_query_with_embedding(self, mock_chroma, mock_embeddings):
         """Test querying the vector store with embedding."""
         # Set up mocks
         mock_collection = Mock()
@@ -180,8 +186,11 @@ class TestChromaStore:
         mock_vector_db._collection = mock_collection
         mock_chroma.return_value = mock_vector_db
 
-        # Initialize ChromaStore
-        store = ChromaStore(collection_name="test_collection")
+        # Initialize ChromaStore with injected embeddings
+        store = ChromaStore(
+            collection_name="test_collection",
+            embeddings=mock_embeddings,
+        )
 
         # Test query with embedding
         embedding = [0.1, 0.2, 0.3]
@@ -199,8 +208,7 @@ class TestChromaStore:
         assert results["metadatas"][0][0]["citation_url"] == "https://example.com/doc"
 
     @patch("tapio.vectorstore.chroma_store.Chroma")
-    @patch("tapio.vectorstore.chroma_store.HuggingFaceEmbeddings")
-    def test_get_document(self, mock_embeddings, mock_chroma):
+    def test_get_document(self, mock_chroma, mock_embeddings):
         """Test getting a document by ID."""
         # Set up mocks
         mock_collection = Mock()
@@ -212,8 +220,11 @@ class TestChromaStore:
         mock_vector_db._collection = mock_collection
         mock_chroma.return_value = mock_vector_db
 
-        # Initialize ChromaStore
-        store = ChromaStore(collection_name="test_collection")
+        # Initialize ChromaStore with injected embeddings
+        store = ChromaStore(
+            collection_name="test_collection",
+            embeddings=mock_embeddings,
+        )
 
         # Test get document
         result = store.get_document(document_id="test_doc")
@@ -228,12 +239,13 @@ class TestChromaStore:
         assert "citation_url" in result["metadatas"][0]
         assert result["metadatas"][0]["citation_url"] == "https://example.com/doc"
 
-    @patch("tapio.vectorstore.chroma_store.Chroma")
-    @patch("tapio.vectorstore.chroma_store.HuggingFaceEmbeddings")
-    def test_enhance_document_with_citation(self, mock_embeddings, mock_chroma):
+    def test_enhance_document_with_citation(self, mock_embeddings):
         """Test enhancing a document with citation information."""
-        # Initialize ChromaStore
-        store = ChromaStore(collection_name="test_collection")
+        # Initialize ChromaStore with injected embeddings
+        store = ChromaStore(
+            collection_name="test_collection",
+            embeddings=mock_embeddings,
+        )
 
         # Test with source_url
         doc1 = Mock()

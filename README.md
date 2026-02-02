@@ -5,6 +5,82 @@
 
 Tapio is a RAG (Retrieval Augmented Generation) tool for extracting, processing, and querying information from websites like Migri.fi (Finnish Immigration Service). It provides complete workflow capabilities including web crawling, content parsing, vectorization, and an interactive chatbot interface.
 
+## Version 2.0 - Breaking Changes
+
+**Version 2.0 introduces dependency injection throughout the codebase for improved testability and maintainability.**
+
+### What Changed
+
+- **Service constructors** now accept dependencies instead of creating them internally
+- **Factory pattern** introduced for easy object creation: `RAGOrchestratorFactory`, `VectorizerFactory`
+- **Configuration classes** added: `RAGConfig` for grouping related parameters
+- **CLI commands** remain the same - no user-facing changes to the command interface
+
+### For Advanced Users
+
+If you were directly instantiating classes in your code (not using the CLI), update as follows:
+
+**Before (v1.x):**
+```python
+from tapio.services.rag_orchestrator import RAGOrchestrator
+
+orchestrator = RAGOrchestrator(
+    collection_name="my_docs",
+    persist_directory="./db",
+    model_name="llama3.2",
+    max_tokens=1024
+)
+```
+
+**After (v2.0) - Using Factory (Recommended):**
+```python
+from tapio import RAGConfig, RAGOrchestratorFactory
+
+config = RAGConfig(
+    collection_name="my_docs",
+    persist_directory="./db",
+    llm_model_name="llama3.2",
+    max_tokens=1024
+)
+factory = RAGOrchestratorFactory(config)
+orchestrator = factory.create_orchestrator()
+```
+
+**After (v2.0) - Manual (Advanced):**
+```python
+from langchain_huggingface import HuggingFaceEmbeddings
+from tapio.vectorstore.chroma_store import ChromaStore
+from tapio.services.document_retrieval_service import DocumentRetrievalService
+from tapio.services.llm_service import LLMService
+from tapio.services.rag_orchestrator import RAGOrchestrator
+
+# Create dependencies
+embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+chroma_store = ChromaStore("my_docs", embeddings, "./db")
+doc_service = DocumentRetrievalService(chroma_store, num_results=5)
+llm_service = LLMService(model_name="llama3.2", max_tokens=1024)
+
+# Create orchestrator
+orchestrator = RAGOrchestrator(doc_service, llm_service)
+```
+
+### Testing Improvements
+
+Version 2.0 includes:
+- Mock fixtures for all major components in `tests/conftest.py`
+- Integration tests using real components (run with `pytest -m integration`)
+- Improved unit test isolation without import patching
+
+Run fast unit tests only:
+```bash
+uv run pytest -m "not integration"
+```
+
+Run all tests including integration:
+```bash
+uv run pytest
+```
+
 ## Features
 - **Multi-site support** - Configurable site-specific crawling and parsing
 - **End-to-end pipeline** - Crawl → Parse → Vectorize → Query workflow

@@ -10,31 +10,37 @@ logger = logging.getLogger(__name__)
 
 
 class DocumentRetrievalService:
-    """Service for retrieving relevant documents from the vector store."""
+    """Service for retrieving relevant documents from the vector store.
+    
+    This service handles document retrieval from a vector store and formats
+    the results for use in RAG workflows. The vector store is injected to
+    enable testing and allow reuse of existing store instances.
+    """
 
     def __init__(
         self,
-        collection_name: str = "migri_docs",
-        persist_directory: str = "chroma_db",
+        vector_store: ChromaStore,
         num_results: int = 5,
-    ):
+    ) -> None:
         """Initialize the document retrieval service.
 
         Args:
-            collection_name: Name of the ChromaDB collection
-            persist_directory: Directory where the ChromaDB database is stored
+            vector_store: ChromaStore instance for document retrieval
             num_results: Number of documents to retrieve from the vector store
+            
+        Example:
+            >>> from tapio.vectorstore.chroma_store import ChromaStore
+            >>> from langchain_huggingface import HuggingFaceEmbeddings
+            >>> 
+            >>> embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+            >>> store = ChromaStore("my_docs", embeddings)
+            >>> service = DocumentRetrievalService(vector_store=store, num_results=3)
         """
         self.num_results = num_results
-
-        # Initialize the vector store
-        self.vector_store = ChromaStore(
-            collection_name=collection_name,
-            persist_directory=persist_directory,
-        )
+        self.vector_store = vector_store
 
         logger.info(
-            f"Initialized document retrieval service with collection '{collection_name}'",
+            "Initialized document retrieval service",
         )
 
     def retrieve_documents(self, query_text: str) -> list[Any]:

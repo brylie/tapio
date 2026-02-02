@@ -18,7 +18,6 @@ from lxml import html
 
 from tapio.config import (
     ConfigManager,
-    settings,
 )
 from tapio.config.config_models import SiteConfig
 
@@ -68,32 +67,41 @@ class Parser:
     HTML content parser that uses site-specific configurations.
 
     This parser loads configurations for different websites and extracts
-    content using the appropriate selectors for each site.
+    content using the appropriate selectors for each site. Configuration
+    and directory paths are injected to enable testing and reuse.
     """
 
     def __init__(
         self,
         site_name: str,
-        config_path: str | None = None,
-    ):
-        """
-        Initialize the parser.
+        site_config: SiteConfig,
+        input_dir: str,
+        output_dir: str,
+    ) -> None:
+        """Initialize the parser.
 
         Args:
-            site_name: Site to parse (must match a key in config)
-            config_path: Optional path to custom config file
+            site_name: Name of the site being parsed
+            site_config: Site-specific configuration with selectors
+            input_dir: Directory containing crawled HTML files
+            output_dir: Directory for output markdown files
+            
+        Example:
+            >>> from tapio.config.config_manager import ConfigManager
+            >>> from tapio.config import settings
+            >>> 
+            >>> config_manager = ConfigManager()
+            >>> site_config = config_manager.get_site_config("migri")
+            >>> input_dir = os.path.join(settings.DEFAULT_CONTENT_DIR, "migri", "crawled")
+            >>> output_dir = os.path.join(settings.DEFAULT_CONTENT_DIR, "migri", "parsed")
+            >>> parser = Parser("migri", site_config, input_dir, output_dir)
         """
         self.site = site_name
-
-        # Use ConfigManager to load site configuration
-        config_manager = ConfigManager(config_path)
-        self.config = config_manager.get_site_config(site_name)
+        self.config = site_config
+        self.input_dir = input_dir
+        self.output_dir = output_dir
 
         self.current_base_url: str | None = None  # Will store the base URL of the current document
-
-        # Use standard directory structure based on site name
-        self.input_dir = os.path.join(settings.DEFAULT_CONTENT_DIR, site_name, settings.DEFAULT_DIRS["CRAWLED_DIR"])
-        self.output_dir = os.path.join(settings.DEFAULT_CONTENT_DIR, site_name, settings.DEFAULT_DIRS["PARSED_DIR"])
 
         self.setup_logging()
         self.logger = logging.getLogger(__name__)

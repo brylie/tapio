@@ -6,7 +6,6 @@ from typing import Any
 
 from langchain.schema.document import Document  # type: ignore[import-not-found]
 from langchain_chroma import Chroma  # type: ignore[import-not-found]
-from langchain_huggingface import HuggingFaceEmbeddings  # type: ignore[import-not-found]
 from langchain_text_splitters import MarkdownTextSplitter  # type: ignore[import-not-found]
 
 from tapio.utils.markdown_utils import find_markdown_files, read_markdown_file
@@ -15,50 +14,42 @@ logger = logging.getLogger(__name__)
 
 
 class MarkdownVectorizer:
-    """Vectorize markdown content and store in ChromaDB using LangChain."""
+    """Vectorize markdown content and store in ChromaDB using LangChain.
+    
+    This class handles the vectorization pipeline for markdown documents,
+    including text splitting and storage in a vector database. Dependencies
+    are injected to enable testing and configuration flexibility.
+    """
 
     def __init__(
         self,
-        collection_name: str,
-        persist_directory: str = "chroma_db",
-        embedding_model_name: str = "all-MiniLM-L6-v2",
-        chunk_size: int = 1000,
-        chunk_overlap: int = 200,
-    ):
-        """
-        Initialize the vectorizer.
+        vector_db: Chroma,
+        text_splitter: MarkdownTextSplitter,
+    ) -> None:
+        """Initialize the vectorizer.
 
         Args:
-            collection_name: Name of the ChromaDB collection to use
-            persist_directory: Directory to persist the ChromaDB database
-            embedding_model_name: Name of the sentence-transformers model to use
-            chunk_size: Size of text chunks in characters
-            chunk_overlap: Overlap between chunks in characters
+            vector_db: LangChain Chroma instance for vector storage
+            text_splitter: MarkdownTextSplitter for chunking documents
+            
+        Example:
+            >>> from langchain_chroma import Chroma
+            >>> from langchain_huggingface import HuggingFaceEmbeddings
+            >>> from langchain_text_splitters import MarkdownTextSplitter
+            >>> 
+            >>> embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+            >>> vector_db = Chroma(
+            ...     collection_name="my_docs",
+            ...     embedding_function=embeddings,
+            ...     persist_directory="./chroma_db"
+            ... )
+            >>> text_splitter = MarkdownTextSplitter(chunk_size=1000, chunk_overlap=200)
+            >>> vectorizer = MarkdownVectorizer(vector_db, text_splitter)
         """
-        # Initialize embedding model
-        self.embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
+        self.vector_db = vector_db
+        self.text_splitter = text_splitter
 
-        # Initialize text splitter for markdown
-        self.text_splitter = MarkdownTextSplitter(
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-        )
-
-        # Directory and collection config
-        self.persist_directory = persist_directory
-        self.collection_name = collection_name
-
-        # Initialize vector store
-        self.vector_db = Chroma(
-            collection_name=collection_name,
-            embedding_function=self.embeddings,
-            persist_directory=persist_directory,
-        )
-
-        # Save configuration
-        self.embedding_model_name = embedding_model_name
-        self.chunk_size = chunk_size
-        self.chunk_overlap = chunk_overlap
+        logger.debug("Initialized MarkdownVectorizer")
 
     def process_directory(
         self,

@@ -2,10 +2,21 @@ import logging
 import os
 
 import typer
+from langchain_chroma import Chroma  # type: ignore[import-not-found]
+from langchain_huggingface import HuggingFaceEmbeddings  # type: ignore[import-not-found]
+from langchain_text_splitters import MarkdownTextSplitter  # type: ignore[import-not-found]
 
 from tapio.config import ConfigManager
-from tapio.config.settings import DEFAULT_CHROMA_COLLECTION, DEFAULT_CONTENT_DIR, DEFAULT_DIRS
+from tapio.config.config_models import RAGConfig
+from tapio.config.settings import (
+    DEFAULT_CHROMA_COLLECTION,
+    DEFAULT_CONTENT_DIR,
+    DEFAULT_DIRS,
+    DEFAULT_EMBEDDING_MODEL,
+    DEFAULT_NUM_RESULTS,
+)
 from tapio.crawler.runner import CrawlerRunner
+from tapio.factories import RAGOrchestratorFactory
 from tapio.parser import Parser
 from tapio.vectorstore.vectorizer import MarkdownVectorizer
 
@@ -195,9 +206,20 @@ def parse(
             # Parse a specific site
             if site in available_sites:
                 typer.echo(f"🔧 Using configuration for site: {site}")
+                
+                # Get site config from config manager
+                site_config = config_manager.get_site_config(site)
+                
+                # Determine input and output directories
+                input_dir = os.path.join(DEFAULT_CONTENT_DIR, site, DEFAULT_DIRS["CRAWLED_DIR"])
+                output_dir = os.path.join(DEFAULT_CONTENT_DIR, site, DEFAULT_DIRS["PARSED_DIR"])
+                
+                # Create parser with dependency injection
                 parser = Parser(
                     site_name=site,
-                    config_path=config_path,
+                    site_config=site_config,
+                    input_dir=input_dir,
+                    output_dir=output_dir,
                 )
                 results = parser.parse_all()
 
@@ -247,9 +269,19 @@ def parse(
             total_results = []
             for site_name in sites_to_parse:
                 typer.echo(f"🔧 Parsing site: {site_name}")
+                # Get site configuration
+                site_config = config_manager.get_site_config(site_name)
+                
+                # Build directory paths
+                input_dir = os.path.join(DEFAULT_CONTENT_DIR, site_name, DEFAULT_DIRS["CRAWLED_DIR"])
+                output_dir = os.path.join(DEFAULT_CONTENT_DIR, site_name, DEFAULT_DIRS["PARSED_DIR"])
+                
+                # Create parser with injected dependencies
                 parser = Parser(
                     site_name=site_name,
-                    config_path=config_path,
+                    site_config=site_config,
+                    input_dir=input_dir,
+                    output_dir=output_dir,
                 )
 
                 site_results = parser.parse_all()
@@ -327,13 +359,22 @@ def vectorize(
     typer.echo(f"📑 Using collection name: {collection_name}")
 
     try:
-        # Initialize vectorizer
-        vectorizer = MarkdownVectorizer(
-            collection_name=collection_name,
-            persist_directory=db_dir,
-            embedding_model_name=embedding_model,
+        # Create dependencies
+        embeddings = HuggingFaceEmbeddings(model_name=embedding_model)
+        text_splitter = MarkdownTextSplitter(
             chunk_size=1000,
             chunk_overlap=200,
+        )
+        vector_db = Chroma(
+            collection_name=collection_name,
+            embedding_function=embeddings,
+            persist_directory=db_dir,
+        )
+        
+        # Initialize vectorizer with injected dependencies
+        vectorizer = MarkdownVectorizer(
+            vector_db=vector_db,
+            text_splitter=text_splitter,
         )
 
         # Process files in the directory
@@ -443,12 +484,23 @@ def tapio_app(
         if share:
             typer.echo("🔗 Creating a shareable link")
 
-        # Launch the Gradio app with CLI parameters
-        launch_app(
+        # Create RAG configuration
+        rag_config = RAGConfig(
             collection_name=collection_name,
             persist_directory=db_dir,
-            model_name=model_name,
+            embedding_model_name=DEFAULT_EMBEDDING_MODEL,
+            llm_model_name=model_name,
             max_tokens=max_tokens,
+            num_results=DEFAULT_NUM_RESULTS,
+        )
+        
+        # Create RAG orchestrator using factory
+        factory = RAGOrchestratorFactory(rag_config)
+        orchestrator = factory.create_orchestrator()
+
+        # Launch the Gradio app with orchestrator
+        launch_app(
+            rag_orchestrator=orchestrator,
             share=share,
         )
 

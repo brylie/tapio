@@ -6,24 +6,40 @@ from typing import Any
 from chromadb import GetResult, QueryResult  # type: ignore[import-not-found]
 from langchain_chroma import Chroma  # type: ignore[import-not-found]
 from langchain_core.documents import Document  # type: ignore[import-not-found]
-from langchain_huggingface import HuggingFaceEmbeddings  # type: ignore[import-not-found]
 
 logger = logging.getLogger(__name__)
 
 
 class ChromaStore:
-    """LangChain-based ChromaDB vector store abstraction."""
+    """LangChain-based ChromaDB vector store abstraction.
+    
+    This class wraps LangChain's Chroma implementation with a simpler interface.
+    Dependencies are injected to allow for testing and configuration flexibility.
+    """
 
-    def __init__(self, collection_name: str, persist_directory: str = "chroma_db") -> None:
-        """
-        Initialize the ChromaDB vector store.
+    def __init__(
+        self,
+        collection_name: str,
+        embeddings: Any,
+        persist_directory: str = "chroma_db",
+    ) -> None:
+        """Initialize the ChromaDB vector store.
 
         Args:
             collection_name: Name of the ChromaDB collection
+            embeddings: Embeddings instance (e.g., HuggingFaceEmbeddings)
             persist_directory: Directory to persist the ChromaDB database
+            
+        Example:
+            >>> from langchain_huggingface import HuggingFaceEmbeddings
+            >>> embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+            >>> store = ChromaStore(
+            ...     collection_name="my_docs",
+            ...     embeddings=embeddings,
+            ...     persist_directory="./chroma_db"
+            ... )
         """
-        # Initialize embeddings
-        self.embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        self.embeddings = embeddings
 
         # Initialize the vector store
         self.vector_db = Chroma(

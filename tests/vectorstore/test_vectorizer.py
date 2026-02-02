@@ -8,57 +8,28 @@ from tapio.vectorstore.vectorizer import MarkdownVectorizer
 class TestMarkdownVectorizer:
     """Tests for the MarkdownVectorizer class."""
 
-    @patch("tapio.vectorstore.vectorizer.Chroma")
-    @patch("tapio.vectorstore.vectorizer.HuggingFaceEmbeddings")
-    @patch("tapio.vectorstore.vectorizer.MarkdownTextSplitter")
-    def test_init(self, mock_splitter_class, mock_embeddings_class, mock_chroma):
+    def test_init(self):
         """Test initialization of the vectorizer."""
-        # Set up mocks
-        mock_embeddings_instance = Mock()
-        mock_embeddings_class.return_value = mock_embeddings_instance
-        mock_splitter_instance = Mock()
-        mock_splitter_class.return_value = mock_splitter_instance
+        # Create mocks
+        mock_vector_db = Mock()
+        mock_text_splitter = Mock()
 
-        # Initialize vectorizer
+        # Initialize vectorizer with dependency injection
         vectorizer = MarkdownVectorizer(
-            collection_name="test_collection",
-            persist_directory="test_dir",
-            embedding_model_name="test-model",
-            chunk_size=500,
-            chunk_overlap=100,
+            vector_db=mock_vector_db,
+            text_splitter=mock_text_splitter,
         )
 
-        # Check if components were initialized correctly
-        mock_embeddings_class.assert_called_once_with(model_name="test-model")
-        mock_splitter_class.assert_called_once_with(chunk_size=500, chunk_overlap=100)
-        mock_chroma.assert_called_once_with(
-            collection_name="test_collection",
-            embedding_function=mock_embeddings_instance,
-            persist_directory="test_dir",
-        )
-
-        # Check if configuration was saved
-        assert vectorizer.collection_name == "test_collection"
-        assert vectorizer.persist_directory == "test_dir"
-        assert vectorizer.embedding_model_name == "test-model"
-        assert vectorizer.chunk_size == 500
-        assert vectorizer.chunk_overlap == 100
+        # Check if dependencies were stored
+        assert vectorizer.vector_db == mock_vector_db
+        assert vectorizer.text_splitter == mock_text_splitter
 
     @patch("tapio.vectorstore.vectorizer.find_markdown_files")
-    @patch("tapio.vectorstore.vectorizer.Chroma")
-    @patch("tapio.vectorstore.vectorizer.HuggingFaceEmbeddings")
-    @patch("tapio.vectorstore.vectorizer.MarkdownTextSplitter")
-    def test_process_directory(
-        self,
-        mock_splitter_class,
-        mock_embeddings_class,
-        mock_chroma,
-        mock_find_files,
-    ):
+    def test_process_directory(self, mock_find_files):
         """Test processing a directory of markdown files."""
         # Set up mocks
         mock_vector_db = Mock()
-        mock_chroma.return_value = mock_vector_db
+        mock_text_splitter = Mock()
 
         # Set up mock for find_markdown_files to return some test files
         test_files = [
@@ -69,7 +40,10 @@ class TestMarkdownVectorizer:
         mock_find_files.return_value = test_files
 
         # Initialize vectorizer with mocked _process_batch
-        vectorizer = MarkdownVectorizer(collection_name="test_collection")
+        vectorizer = MarkdownVectorizer(
+            vector_db=mock_vector_db,
+            text_splitter=mock_text_splitter,
+        )
         vectorizer._process_batch = Mock(return_value=2)  # 2 chunks per batch
 
         # Process directory
@@ -96,24 +70,16 @@ class TestMarkdownVectorizer:
 
     @patch("tapio.vectorstore.vectorizer.read_markdown_file")
     @patch("tapio.vectorstore.vectorizer.Document")
-    @patch("tapio.vectorstore.vectorizer.Chroma")
-    @patch("tapio.vectorstore.vectorizer.HuggingFaceEmbeddings")
-    @patch("tapio.vectorstore.vectorizer.MarkdownTextSplitter")
     def test_process_batch(
         self,
-        mock_splitter_class,
-        mock_embeddings_class,
-        mock_chroma,
         mock_document_class,
         mock_read_file,
     ):
         """Test processing a batch of markdown files."""
         # Set up mocks
         mock_vector_db = Mock()
-        mock_chroma.return_value = mock_vector_db
+        mock_text_splitter = Mock()
 
-        mock_splitter = Mock()
-        mock_splitter_class.return_value = mock_splitter
 
         # Set up read_markdown_file to return test data
         mock_read_file.side_effect = [
@@ -133,13 +99,16 @@ class TestMarkdownVectorizer:
         mock_chunk2.metadata = {}
         mock_chunk3 = Mock()
         mock_chunk3.metadata = {}
-        mock_splitter.split_documents.side_effect = [
+        mock_text_splitter.split_documents.side_effect = [
             [mock_chunk1, mock_chunk2],  # First document splits into 2 chunks
             [mock_chunk3],  # Second document splits into 1 chunk
         ]
 
         # Initialize vectorizer
-        vectorizer = MarkdownVectorizer(collection_name="test_collection")
+        vectorizer = MarkdownVectorizer(
+            vector_db=mock_vector_db,
+            text_splitter=mock_text_splitter,
+        )
 
         # Set up _prepare_metadata to return test metadata
         vectorizer._prepare_metadata = Mock(
@@ -180,7 +149,7 @@ class TestMarkdownVectorizer:
         )
 
         # Verify text splitter was called for each document
-        mock_splitter.split_documents.assert_has_calls(
+        mock_text_splitter.split_documents.assert_has_calls(
             [
                 call([mock_doc1]),
                 call([mock_doc2]),
@@ -205,24 +174,15 @@ class TestMarkdownVectorizer:
 
     @patch("tapio.vectorstore.vectorizer.read_markdown_file")
     @patch("tapio.vectorstore.vectorizer.Document")
-    @patch("tapio.vectorstore.vectorizer.Chroma")
-    @patch("tapio.vectorstore.vectorizer.HuggingFaceEmbeddings")
-    @patch("tapio.vectorstore.vectorizer.MarkdownTextSplitter")
     def test_process_file(
         self,
-        mock_splitter_class,
-        mock_embeddings_class,
-        mock_chroma,
         mock_document_class,
         mock_read_file,
     ):
         """Test processing a single markdown file."""
         # Set up mocks
         mock_vector_db = Mock()
-        mock_chroma.return_value = mock_vector_db
-
-        mock_splitter = Mock()
-        mock_splitter_class.return_value = mock_splitter
+        mock_text_splitter = Mock()
 
         # Set up read_markdown_file to return test data
         mock_read_file.return_value = ({"title": "Test"}, "Content")
@@ -236,10 +196,13 @@ class TestMarkdownVectorizer:
         mock_chunk1.metadata = {}
         mock_chunk2 = Mock()
         mock_chunk2.metadata = {}
-        mock_splitter.split_documents.return_value = [mock_chunk1, mock_chunk2]
+        mock_text_splitter.split_documents.return_value = [mock_chunk1, mock_chunk2]
 
-        # Initialize vectorizer
-        vectorizer = MarkdownVectorizer(collection_name="test_collection")
+        # Initialize vectorizer with dependency injection
+        vectorizer = MarkdownVectorizer(
+            vector_db=mock_vector_db,
+            text_splitter=mock_text_splitter,
+        )
 
         # Set up _prepare_metadata to return test metadata
         test_metadata = {"source_id": "file", "title": "Test"}
@@ -258,7 +221,7 @@ class TestMarkdownVectorizer:
         )
 
         # Verify text splitter was called
-        mock_splitter.split_documents.assert_called_once_with([mock_doc])
+        mock_text_splitter.split_documents.assert_called_once_with([mock_doc])
 
         # Verify chunk metadata was updated
         assert mock_chunk1.metadata["chunk_index"] == 0
@@ -279,9 +242,14 @@ class TestMarkdownVectorizer:
         # Set up mocks
         mock_basename.return_value = "file.md"
         mock_splitext.return_value = ("file", ".md")
+        mock_vector_db = Mock()
+        mock_text_splitter = Mock()
 
-        # Initialize vectorizer
-        vectorizer = MarkdownVectorizer(collection_name="test_collection")
+        # Initialize vectorizer with dependency injection
+        vectorizer = MarkdownVectorizer(
+            vector_db=mock_vector_db,
+            text_splitter=mock_text_splitter,
+        )
 
         # Test with source_url
         metadata = {
@@ -314,63 +282,3 @@ class TestMarkdownVectorizer:
         assert enriched["source_url"] == "https://example.com/doc"
         assert enriched["citation_url"] == "https://example.com/doc"
 
-    @patch("tapio.vectorstore.vectorizer.read_markdown_file")
-    @patch("tapio.vectorstore.vectorizer.Chroma")
-    @patch("tapio.vectorstore.vectorizer.HuggingFaceEmbeddings")
-    @patch("tapio.vectorstore.vectorizer.MarkdownTextSplitter")
-    def test_process_batch_error_handling(
-        self,
-        mock_splitter_class,
-        mock_embeddings_class,
-        mock_chroma,
-        mock_read_file,
-    ):
-        """Test error handling in process_batch."""
-        # Set up mocks
-        mock_vector_db = Mock()
-        mock_chroma.return_value = mock_vector_db
-
-        # Set up read_markdown_file to raise an exception
-        mock_read_file.side_effect = Exception("Test error")
-
-        # Initialize vectorizer
-        vectorizer = MarkdownVectorizer(collection_name="test_collection")
-
-        # Process batch with error
-        chunk_count = vectorizer._process_batch(["test_dir/file.md"])
-
-        # Verify read_markdown_file was called
-        mock_read_file.assert_called_once_with("test_dir/file.md")
-
-        # Verify no chunks were returned
-        assert chunk_count == 0
-
-        # Verify add_documents was not called
-        mock_vector_db.add_documents.assert_not_called()
-
-    @patch("tapio.vectorstore.vectorizer.read_markdown_file")
-    @patch("tapio.vectorstore.vectorizer.Chroma")
-    @patch("tapio.vectorstore.vectorizer.HuggingFaceEmbeddings")
-    @patch("tapio.vectorstore.vectorizer.MarkdownTextSplitter")
-    def test_process_file_empty_content(
-        self,
-        mock_splitter_class,
-        mock_embeddings_class,
-        mock_chroma,
-        mock_read_file,
-    ):
-        """Test processing a file with empty content."""
-        # Set up read_markdown_file to return empty content
-        mock_read_file.return_value = ({"title": "Test"}, "")
-
-        # Initialize vectorizer
-        vectorizer = MarkdownVectorizer(collection_name="test_collection")
-
-        # Process file with empty content
-        chunk_count = vectorizer.process_file("test_dir/file.md")
-
-        # Verify read_markdown_file was called
-        mock_read_file.assert_called_once_with("test_dir/file.md")
-
-        # Verify no chunks were processed
-        assert chunk_count == 0

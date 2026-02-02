@@ -8,6 +8,7 @@ from unittest.mock import MagicMock
 
 import yaml
 
+from tapio.config.config_manager import ConfigManager
 from tapio.parser import Parser
 
 
@@ -139,10 +140,18 @@ class TestParser(unittest.TestCase):
         with open(self.config_path, "w") as f:
             yaml.dump(self.test_config, f)
 
-        # Create default parser (do not pass input_dir/output_dir)
+        # Create config manager and get site config
+        from tapio.config.config_manager import ConfigManager
+        
+        config_manager = ConfigManager(self.config_path)
+        site_config = config_manager.get_site_config(self.site_name)
+
+        # Create parser with injected dependencies
         self.parser = Parser(
             site_name=self.site_name,
-            config_path=self.config_path,
+            site_config=site_config,
+            input_dir=self.input_dir,
+            output_dir=self.output_dir,
         )
 
         # Mock the logger
@@ -179,11 +188,11 @@ class TestParser(unittest.TestCase):
 
     def test_init_with_invalid_site(self):
         """Test initialization with invalid site."""
+        from tapio.config.config_manager import ConfigManager
+        
+        config_manager = ConfigManager(self.config_path)
         with self.assertRaises(ValueError):
-            Parser(
-                site_name="nonexistent",
-                config_path=self.config_path,
-            )
+            config_manager.get_site_config("nonexistent")
 
     def test_parse_html_with_main_content(self):
         """Test parsing HTML with main-content div."""
@@ -223,9 +232,21 @@ class TestParser(unittest.TestCase):
     def test_parse_html_without_fallback(self):
         """Test behavior when no selectors match and fallback is disabled."""
         # Create parser with no fallback config
+        config_manager = ConfigManager(self.config_path)
+        no_fallback_config = config_manager.get_site_config(self.no_fallback_site_name)
+        
+        # Prepare input/output directories for no_fallback site
+        from tapio.config.settings import DEFAULT_DIRS
+        no_fallback_input_dir = os.path.join(self.temp_dir, self.no_fallback_site_name, DEFAULT_DIRS["CRAWLED_DIR"])
+        no_fallback_output_dir = os.path.join(self.temp_dir, self.no_fallback_site_name, DEFAULT_DIRS["PARSED_DIR"])
+        os.makedirs(no_fallback_input_dir, exist_ok=True)
+        os.makedirs(no_fallback_output_dir, exist_ok=True)
+        
         no_fallback_parser = Parser(
             site_name=self.no_fallback_site_name,
-            config_path=self.config_path,
+            site_config=no_fallback_config,
+            input_dir=no_fallback_input_dir,
+            output_dir=no_fallback_output_dir,
         )
         no_fallback_parser.logger = MagicMock()
 
@@ -307,24 +328,6 @@ class TestParser(unittest.TestCase):
         self.assertIn("About Example", titles)
         self.assertIn("No Main Content", titles)
         self.assertIn("Services", titles)
-
-    def test_list_available_site_configs(self):
-        """Test listing available site configurations."""
-        available_sites = Parser.list_available_site_configs(self.config_path)
-        self.assertEqual(len(available_sites), 2)
-        self.assertIn("example", available_sites)
-        self.assertIn("no_fallback", available_sites)
-
-    def test_get_site_config(self):
-        """Test getting site configuration."""
-        config = Parser.get_site_config("example", self.config_path)
-        self.assertIsNotNone(config)
-        if config:  # Check if config is not None before accessing attributes
-            self.assertEqual(config.description, "Example Website for Testing")
-
-        # Test getting non-existent site config
-        config = Parser.get_site_config("nonexistent", self.config_path)
-        self.assertIsNone(config)
 
     def test_convert_element_link_to_absolute(self):
         """Test converting a single element's link attribute to absolute URL."""

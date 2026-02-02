@@ -16,3 +16,11 @@ DEFAULT_DIRS = {
 
 DEFAULT_CHROMA_COLLECTION = "tapio_knowledge"
 DEFAULT_CRAWLER_TIMEOUT = 30
+
+# Embedding model configuration
+DEFAULT_EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+
+# RAG configuration defaults
+DEFAULT_LLM_MODEL = "llama3.2"
+DEFAULT_MAX_TOKENS = 1024
+DEFAULT_NUM_RESULTS = 5

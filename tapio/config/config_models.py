@@ -5,6 +5,7 @@ site-specific HTML parsing, including content selectors and HTML-to-Markdown
 conversion settings.
 """
 
+from dataclasses import dataclass
 from typing import Annotated, Any
 from urllib.parse import urlparse
 
@@ -117,3 +118,35 @@ class ParserConfigRegistry(BaseModel):
     """Registry of all site parser configurations."""
 
     sites: dict[str, SiteConfig]
+
+
+@dataclass
+class RAGConfig:
+    """Configuration for RAG (Retrieval Augmented Generation) system.
+
+    Groups all configuration parameters for the RAG orchestrator and its
+    dependencies, including vector store settings, embedding model, and
+    LLM configuration.
+
+    Args:
+        collection_name: Name of the ChromaDB collection
+        persist_directory: Directory path for ChromaDB persistence
+        embedding_model_name: Name of the HuggingFace embedding model
+        llm_model_name: Name of the Ollama LLM model
+        max_tokens: Maximum tokens for LLM generation
+        num_results: Number of documents to retrieve for context
+
+    Example:
+        >>> config = RAGConfig(
+        ...     collection_name="my_docs",
+        ...     llm_model_name="llama3.2:latest"
+        ... )
+    """
+
+    collection_name: str = "tapio_knowledge"
+    persist_directory: str = "chroma_db"
+    embedding_model_name: str = "all-MiniLM-L6-v2"
+    llm_model_name: str = "llama3.2"
+    max_tokens: int = 1024
+    num_results: int = 5
+
