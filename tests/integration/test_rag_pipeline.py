@@ -5,7 +5,7 @@ end-to-end functionality. The LLM service is mocked to avoid external
 dependencies on Ollama.
 """
 
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from langchain_core.documents import Document  # type: ignore[import-not-found]
@@ -113,10 +113,9 @@ def test_rag_factory_integration(tmp_chroma_db, mock_embeddings):
     factory = RAGOrchestratorFactory(config)
 
     # Mock the create_embeddings to return our mock
-    factory.create_embeddings = lambda: mock_embeddings
-
-    # Create orchestrator
-    orchestrator = factory.create_orchestrator()
+    with patch.object(factory, "create_embeddings", return_value=mock_embeddings):
+        # Create orchestrator
+        orchestrator = factory.create_orchestrator()
 
     # Verify orchestrator was created
     assert isinstance(orchestrator, RAGOrchestrator)
@@ -161,7 +160,7 @@ def test_document_retrieval_similarity_search(tmp_chroma_db, mock_embeddings):
     results = doc_service.retrieve_documents("residence permits")
 
     # Verify we got results
-    assert len(results) <= 2  # Should respect num_results limit
+    assert len(results) == 2  # Should return exactly num_results documents
 
     # Verify results have content
     for doc in results:
