@@ -6,7 +6,6 @@ instances without tight coupling.
 """
 
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_text_splitters import MarkdownTextSplitter
 
 from tapio.config.config_models import RAGConfig
 from tapio.services.document_retrieval_service import DocumentRetrievalService
@@ -123,61 +122,4 @@ class RAGOrchestratorFactory:
         return RAGOrchestrator(
             doc_retrieval_service=doc_service,
             llm_service=llm_service,
-        )
-
-
-class VectorizerFactory:
-    """Factory for creating MarkdownVectorizer instances.
-
-    Handles creation of text splitters and vector database instances for
-    the vectorization pipeline.
-
-    Args:
-        collection_name: Name of the ChromaDB collection
-        persist_directory: Directory path for ChromaDB persistence
-        embedding_model_name: Name of the HuggingFace embedding model
-        chunk_size: Size of text chunks for splitting
-        chunk_overlap: Overlap between consecutive chunks
-    """
-
-    def __init__(
-        self,
-        collection_name: str,
-        persist_directory: str = "chroma_db",
-        embedding_model_name: str = "all-MiniLM-L6-v2",
-        chunk_size: int = 1000,
-        chunk_overlap: int = 200,
-    ) -> None:
-        """Initialize the vectorizer factory.
-
-        Args:
-            collection_name: Name of the ChromaDB collection
-            persist_directory: Directory for ChromaDB persistence
-            embedding_model_name: HuggingFace embedding model name
-            chunk_size: Text chunk size
-            chunk_overlap: Overlap between chunks
-        """
-        self.collection_name = collection_name
-        self.persist_directory = persist_directory
-        self.embedding_model_name = embedding_model_name
-        self.chunk_size = chunk_size
-        self.chunk_overlap = chunk_overlap
-
-    def create_embeddings(self) -> HuggingFaceEmbeddings:
-        """Create embeddings instance.
-
-        Returns:
-            Configured HuggingFaceEmbeddings instance
-        """
-        return HuggingFaceEmbeddings(model_name=self.embedding_model_name)
-
-    def create_text_splitter(self) -> MarkdownTextSplitter:
-        """Create text splitter for markdown.
-
-        Returns:
-            Configured MarkdownTextSplitter instance
-        """
-        return MarkdownTextSplitter(
-            chunk_size=self.chunk_size,
-            chunk_overlap=self.chunk_overlap,
         )
