@@ -141,8 +141,6 @@ class TestParser(unittest.TestCase):
             yaml.dump(self.test_config, f)
 
         # Create config manager and get site config
-        from tapio.config.config_manager import ConfigManager
-
         config_manager = ConfigManager(self.config_path)
         site_config = config_manager.get_site_config(self.site_name)
 
@@ -188,8 +186,6 @@ class TestParser(unittest.TestCase):
 
     def test_init_with_invalid_site(self):
         """Test initialization with invalid site."""
-        from tapio.config.config_manager import ConfigManager
-
         config_manager = ConfigManager(self.config_path)
         with self.assertRaises(ValueError):
             config_manager.get_site_config("nonexistent")
