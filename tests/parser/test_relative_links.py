@@ -8,6 +8,7 @@ import unittest
 
 import yaml
 
+from tapio.config.config_manager import ConfigManager
 from tapio.parser import Parser
 
 
@@ -86,10 +87,16 @@ class TestRelativeLinks(unittest.TestCase):
         with open(self.config_path, "w") as f:
             yaml.dump(self.test_config, f)
 
-        # Create parser (do not pass input_dir/output_dir)
+        # Create config manager and get site config
+        config_manager = ConfigManager(self.config_path)
+        site_config = config_manager.get_site_config("test_site")
+
+        # Create parser with injected dependencies
         self.parser = Parser(
             site_name="test_site",
-            config_path=self.config_path,
+            site_config=site_config,
+            input_dir=self.input_dir,
+            output_dir=self.output_dir,
         )
 
     def tearDown(self):
@@ -194,10 +201,15 @@ class TestRelativeLinks(unittest.TestCase):
         with open(self.config_path, "w") as f:
             yaml.dump(self.test_config, f)
 
-        # Create a new parser with the updated config
+        # Create a new parser with the updated config using dependency injection
+        config_manager = ConfigManager(self.config_path)
+        site_config = config_manager.get_site_config("test_site")
+
         parser = Parser(
             site_name="test_site",
-            config_path=self.config_path,
+            site_config=site_config,
+            input_dir=self.input_dir,
+            output_dir=self.output_dir,
         )
 
         # Delete URL mappings to force using domain-based URL construction

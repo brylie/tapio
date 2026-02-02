@@ -1,6 +1,6 @@
 [project]
 name = "tapio"
-version = "0.1.0"
+version = "2.0.0"
 description = "An assistant for Finnish immigrants"
 readme = "README.md"
 requires-python = ">=3.10"

@@ -5,10 +5,19 @@ site-specific HTML parsing, including content selectors and HTML-to-Markdown
 conversion settings.
 """
 
+from dataclasses import dataclass
 from typing import Annotated, Any
 from urllib.parse import urlparse
 
 from pydantic import BaseModel, Field, HttpUrl
+
+from tapio.config.settings import (
+    DEFAULT_CHROMA_COLLECTION,
+    DEFAULT_EMBEDDING_MODEL,
+    DEFAULT_LLM_MODEL,
+    DEFAULT_MAX_TOKENS,
+    DEFAULT_NUM_RESULTS,
+)
 
 
 class HtmlToMarkdownConfig(BaseModel):
@@ -117,3 +126,34 @@ class ParserConfigRegistry(BaseModel):
     """Registry of all site parser configurations."""
 
     sites: dict[str, SiteConfig]
+
+
+@dataclass
+class RAGConfig:
+    """Configuration for RAG (Retrieval Augmented Generation) system.
+
+    Groups all configuration parameters for the RAG orchestrator and its
+    dependencies, including vector store settings, embedding model, and
+    LLM configuration.
+
+    Args:
+        collection_name: Name of the ChromaDB collection
+        persist_directory: Directory path for ChromaDB persistence
+        embedding_model_name: Name of the HuggingFace embedding model
+        llm_model_name: Name of the Ollama LLM model
+        max_tokens: Maximum tokens for LLM generation
+        num_results: Number of documents to retrieve for context
+
+    Example:
+        >>> config = RAGConfig(
+        ...     collection_name="my_docs",
+        ...     llm_model_name="llama3.2:latest"
+        ... )
+    """
+
+    collection_name: str = DEFAULT_CHROMA_COLLECTION
+    persist_directory: str = "chroma_db"
+    embedding_model_name: str = DEFAULT_EMBEDDING_MODEL
+    llm_model_name: str = DEFAULT_LLM_MODEL
+    max_tokens: int = DEFAULT_MAX_TOKENS
+    num_results: int = DEFAULT_NUM_RESULTS

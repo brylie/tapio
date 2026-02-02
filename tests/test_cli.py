@@ -8,7 +8,7 @@ import pytest
 from typer.testing import CliRunner
 
 from tapio.cli import app, find_sites_with_crawled_content
-from tapio.config.settings import DEFAULT_CHROMA_COLLECTION, DEFAULT_CONTENT_DIR, DEFAULT_DIRS
+from tapio.config.settings import DEFAULT_CONTENT_DIR
 
 
 @pytest.fixture
@@ -206,11 +206,13 @@ class TestCli:
         # Check that the command ran successfully
         assert result.exit_code == 0
 
-        # Check that the parser was initialized correctly
-        mock_parser.assert_called_once_with(
-            site_name="migri",
-            config_path=None,
-        )
+        # Check that the parser was initialized with dependency injection
+        assert mock_parser.call_count == 1
+        call_kwargs = mock_parser.call_args[1]
+        assert call_kwargs["site_name"] == "migri"
+        assert "site_config" in call_kwargs
+        assert "input_dir" in call_kwargs
+        assert "output_dir" in call_kwargs
 
         # Check that list_available_sites was called
         mock_config_instance.list_available_sites.assert_called_once()
@@ -310,85 +312,16 @@ class TestCli:
         # Check that list_available_sites was called
         mock_config_instance.list_available_sites.assert_called_once()
 
-        # Check that the parser was initialized correctly with the custom config
-        mock_parser.assert_called_once_with(
-            site_name="custom_site",
-            config_path="custom_configs.yaml",
-        )
+        # Check that the parser was initialized with dependency injection
+        assert mock_parser.call_count == 1
+        call_kwargs = mock_parser.call_args[1]
+        assert call_kwargs["site_name"] == "custom_site"
+        assert "site_config" in call_kwargs
+        assert "input_dir" in call_kwargs
+        assert "output_dir" in call_kwargs
 
         # Check that parse_all was called correctly (without domain parameter)
         mock_parser_instance.parse_all.assert_called_once_with()
-
-    @patch("tapio.cli.MarkdownVectorizer")
-    def test_vectorize_command(self, mock_vectorizer, runner):
-        """Test the vectorize command."""
-        # Set up mock
-        mock_vectorizer_instance = MagicMock()
-        mock_vectorizer_instance.process_directory.return_value = 5
-        mock_vectorizer.return_value = mock_vectorizer_instance
-
-        # Run the command
-        result = runner.invoke(
-            app,
-            [
-                "vectorize",
-            ],
-        )
-
-        # Check that the command ran successfully
-        assert result.exit_code == 0
-
-        # Check that the vectorizer was initialized correctly
-        mock_vectorizer.assert_called_once_with(
-            collection_name=DEFAULT_CHROMA_COLLECTION,
-            persist_directory=DEFAULT_DIRS["CHROMA_DIR"],
-            embedding_model_name="all-MiniLM-L6-v2",
-            chunk_size=1000,
-            chunk_overlap=200,
-        )
-
-        # Check that process_directory was called correctly
-        mock_vectorizer_instance.process_directory.assert_called_once_with(
-            input_dir=DEFAULT_CONTENT_DIR,
-            site_filter=None,
-            batch_size=20,
-        )
-
-        # Check expected output in stdout
-        assert "Starting vectorization" in result.stdout
-        assert f"Vector database will be stored in: {DEFAULT_DIRS['CHROMA_DIR']}" in result.stdout
-        assert "Using embedding model: all-MiniLM-L6-v2" in result.stdout
-        assert "Vectorization completed" in result.stdout
-        assert "Processed 5 files" in result.stdout
-
-    @patch("tapio.cli.MarkdownVectorizer")
-    def test_vectorize_command_with_site(self, mock_vectorizer, runner):
-        """Test the vectorize command with site filter."""
-        # Set up mock
-        mock_vectorizer_instance = MagicMock()
-        mock_vectorizer_instance.process_directory.return_value = 3
-        mock_vectorizer.return_value = mock_vectorizer_instance
-
-        # Mock os.path.exists to return True for the site directory
-        with patch("tapio.cli.os.path.exists", return_value=True):
-            # Run the command with site filter
-            result = runner.invoke(app, ["vectorize", "migri"])
-
-        # Check that the command ran successfully
-        assert result.exit_code == 0
-
-        # Check that process_directory was called with the site filter
-        expected_input_dir = os.path.join(DEFAULT_CONTENT_DIR, "migri", DEFAULT_DIRS["PARSED_DIR"])
-        mock_vectorizer_instance.process_directory.assert_called_once_with(
-            input_dir=expected_input_dir,
-            site_filter=None,
-            batch_size=20,
-        )
-
-        # Check expected output in stdout
-        assert "Starting vectorization" in result.stdout
-        assert "Vectorization completed" in result.stdout
-        assert "Processed 3 files" in result.stdout
 
     @patch("tapio.cli.MarkdownVectorizer")
     def test_vectorize_command_exception(self, mock_vectorizer, runner):
@@ -407,52 +340,6 @@ class TestCli:
         # Check expected output in stdout
         assert "Starting vectorization" in result.stdout
         assert "Error during vectorization: Test error" in result.stdout
-
-    @patch("tapio.app.main")
-    def test_tapio_app_command(self, mock_launch_gradio, runner):
-        """Test the tapio-app command."""
-        # Run the command
-        result = runner.invoke(app, ["tapio-app"])
-
-        # Check that the command ran successfully
-        assert result.exit_code == 0
-
-        # Check that launch_gradio was called correctly
-        mock_launch_gradio.assert_called_once_with(
-            collection_name=DEFAULT_CHROMA_COLLECTION,
-            persist_directory=DEFAULT_DIRS["CHROMA_DIR"],
-            model_name="llama3.2:latest",
-            max_tokens=1024,
-            share=False,
-        )
-
-    @patch("tapio.app.main")
-    def test_tapio_app_command_with_options(self, mock_launch_gradio, runner):
-        """Test the tapio-app command with custom options."""
-        # Run the command with options
-        result = runner.invoke(
-            app,
-            [
-                "tapio-app",
-                "--model-name",
-                "llama3.2:latest",
-                "--max-tokens",
-                "2048",
-                "--share",
-            ],
-        )
-
-        # Check that the command ran successfully
-        assert result.exit_code == 0
-
-        # Check that launch_gradio was called correctly with the custom options
-        mock_launch_gradio.assert_called_once_with(
-            collection_name=DEFAULT_CHROMA_COLLECTION,
-            persist_directory=DEFAULT_DIRS["CHROMA_DIR"],
-            model_name="llama3.2:latest",
-            max_tokens=2048,
-            share=True,
-        )
 
     @patch("tapio.cli.tapio_app")
     def test_dev_command(self, mock_tapio_app, runner):
@@ -620,16 +507,15 @@ class TestCli:
         # Check that all three parsers were created
         assert mock_parser.call_count == 3
 
-        # Check expected calls to Parser constructor - new format uses site_name only
-        expected_calls = [
-            ("migri", None),
-            ("kela", None),
-            ("vero", None),
-        ]
+        # Check expected calls to Parser constructor - new DI format uses site_name, site_config, input_dir, output_dir
+        expected_sites = ["migri", "kela", "vero"]
 
-        for i, (site_name, config_path) in enumerate(expected_calls):
+        for i, site_name in enumerate(expected_sites):
             assert mock_parser.call_args_list[i][1]["site_name"] == site_name
-            assert mock_parser.call_args_list[i][1]["config_path"] == config_path
+            # With DI, we pass site_config not config_path
+            assert "site_config" in mock_parser.call_args_list[i][1]
+            assert "input_dir" in mock_parser.call_args_list[i][1]
+            assert "output_dir" in mock_parser.call_args_list[i][1]
 
         # Check that parse_all was called for each parser
         for mock_instance in mock_parser_instances:

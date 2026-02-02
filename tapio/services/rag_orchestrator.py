@@ -13,40 +13,42 @@ logger = logging.getLogger(__name__)
 
 
 class RAGOrchestrator:
-    """Orchestrates document retrieval and LLM generation for RAG workflow."""
+    """Orchestrates document retrieval and LLM generation for RAG workflow.
+
+    This orchestrator coordinates the RAG pipeline by combining document retrieval
+    with LLM generation. All dependencies are injected to enable testing and
+    allow reuse of configured service instances.
+    """
 
     def __init__(
         self,
-        collection_name: str = "migri_docs",
-        persist_directory: str = "chroma_db",
-        model_name: str = "llama3.2",
-        max_tokens: int = 1024,
-        num_results: int = 5,
-    ):
+        doc_retrieval_service: DocumentRetrievalService,
+        llm_service: LLMService,
+    ) -> None:
         """Initialize the RAG orchestrator.
 
         Args:
-            collection_name: Name of the ChromaDB collection
-            persist_directory: Directory where the ChromaDB database is stored
-            model_name: Name of the LLM model to use
-            max_tokens: Maximum number of tokens to generate
-            num_results: Number of documents to retrieve from the vector store
-        """
-        # Initialize the document retrieval service
-        self.doc_retrieval_service = DocumentRetrievalService(
-            collection_name=collection_name,
-            persist_directory=persist_directory,
-            num_results=num_results,
-        )
+            doc_retrieval_service: Service for retrieving documents from vector store
+            llm_service: Service for LLM generation
 
-        # Initialize the LLM service
-        self.llm_service = LLMService(
-            model_name=model_name,
-            max_tokens=max_tokens,
-        )
+        Example:
+            >>> from tapio.factories import RAGOrchestratorFactory
+            >>> from tapio.config.config_models import RAGConfig
+            >>>
+            >>> config = RAGConfig(collection_name="my_docs")
+            >>> factory = RAGOrchestratorFactory(config)
+            >>> orchestrator = factory.create_orchestrator()
+            >>>
+            >>> # Or manually for advanced use cases:
+            >>> doc_service = DocumentRetrievalService(vector_store=my_store)
+            >>> llm_service = LLMService(model_name="llama3.2")
+            >>> orchestrator = RAGOrchestrator(doc_service, llm_service)
+        """
+        self.doc_retrieval_service = doc_retrieval_service
+        self.llm_service = llm_service
 
         logger.info(
-            f"Initialized RAG orchestrator with collection '{collection_name}' and model '{model_name}'",
+            "Initialized RAG orchestrator",
         )
 
     def query(

@@ -18,8 +18,19 @@ Thank you for considering contributing to Tapio Assistant! This document provide
   - [Testing Guidelines](#testing-guidelines)
     - [Running Tests](#running-tests)
     - [Code Coverage](#code-coverage)
+    - [Test Categories](#test-categories)
+    - [Test Fixtures](#test-fixtures)
   - [Project Structure](#project-structure)
+  - [Programmatic API](#programmatic-api)
+    - [Using Factory Pattern (Recommended)](#using-factory-pattern-recommended)
+    - [Manual Dependency Injection (Advanced)](#manual-dependency-injection-advanced)
+    - [Key Components](#key-components)
   - [Configuration System](#configuration-system)
+    - [Default Settings](#default-settings)
+  - [Site Configurations](#site-configurations)
+    - [Configuration Structure](#configuration-structure)
+    - [Required vs Optional Fields](#required-vs-optional-fields)
+    - [Adding New Sites](#adding-new-sites)
   - [Ollama for LLM Inference](#ollama-for-llm-inference)
   - [Pull Request Process](#pull-request-process)
 
@@ -241,7 +252,7 @@ uv run pytest
 
 ### Code Coverage
 
-We aim for high test coverage. When submitting code:
+We aim for high test coverage (minimum 80%). When submitting code:
 
 1. Check your coverage with:
 
@@ -263,6 +274,41 @@ uv run pytest --cov=tapio.utils tests/utils/
 
 Aim for at least 80% coverage for new code. The HTML coverage report can be found in the `htmlcov` directory. Open `htmlcov/index.html` in your browser to view it.
 
+### Test Categories
+
+We maintain different types of tests:
+
+**Unit Tests** - Fast, isolated tests with mocked dependencies:
+```bash
+uv run pytest -m "not integration"
+```
+
+**Integration Tests** - Tests using real components (marked with `@pytest.mark.integration`):
+```bash
+uv run pytest -m integration
+```
+
+**All Tests**:
+```bash
+uv run pytest
+```
+
+### Test Fixtures
+
+Common mock fixtures are available in `tests/conftest.py`:
+- `mock_embeddings` - Mocked HuggingFace embeddings
+- `mock_chroma_store` - Mocked ChromaDB vector store
+- `mock_llm_service` - Mocked LLM service
+- `mock_doc_retrieval_service` - Mocked document retrieval service
+- `mock_rag_orchestrator` - Mocked RAG orchestrator
+
+Use these fixtures in your tests for consistent mocking:
+```python
+def test_my_feature(mock_rag_orchestrator):
+    # Test uses mocked orchestrator
+    pass
+```
+
 ## Project Structure
 
 The project has been designed with a clear separation of concerns:
@@ -270,10 +316,69 @@ The project has been designed with a clear separation of concerns:
 - `crawler/`: Module responsible for crawling websites and saving HTML content
 - `parsers/`: Module responsible for parsing HTML content into structured formats
 - `vectorstore/`: Module responsible for vectorizing content and storing in ChromaDB
+- `services/`: RAG orchestration and LLM services
 - `config/`: Configuration settings for the project
-- `gradio_app.py`: Gradio interface for the RAG chatbot
+- `app.py`: Gradio interface for the RAG chatbot
+- `cli.py`: Command-line interface
+- `factories.py`: Factory classes for dependency injection
 - `utils/`: Utility modules for embedding generation, markdown processing, etc.
 - `tests/`: Test suite for all modules
+
+## Programmatic API
+
+For developers who want to use Tapio as a library or extend its functionality:
+
+### Using Factory Pattern (Recommended)
+
+```python
+from tapio import RAGConfig, RAGOrchestratorFactory
+
+# Create configuration
+config = RAGConfig(
+    collection_name="my_docs",
+    persist_directory="./db",
+    llm_model_name="llama3.2",
+    max_tokens=1024,
+    num_results=5
+)
+
+# Create orchestrator using factory
+factory = RAGOrchestratorFactory(config)
+orchestrator = factory.create_orchestrator()
+
+# Query the system
+response, documents = orchestrator.query("What are the visa requirements?")
+print(response)
+```
+
+### Manual Dependency Injection (Advanced)
+
+For full control over component creation:
+
+```python
+from langchain_huggingface import HuggingFaceEmbeddings
+from tapio.vectorstore.chroma_store import ChromaStore
+from tapio.services.document_retrieval_service import DocumentRetrievalService
+from tapio.services.llm_service import LLMService
+from tapio.services.rag_orchestrator import RAGOrchestrator
+
+# Create dependencies
+embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+chroma_store = ChromaStore("my_docs", embeddings, "./db")
+doc_service = DocumentRetrievalService(chroma_store, num_results=5)
+llm_service = LLMService(model_name="llama3.2", max_tokens=1024)
+
+# Create orchestrator
+orchestrator = RAGOrchestrator(doc_service, llm_service)
+```
+
+### Key Components
+
+- **RAGOrchestrator**: Main orchestrator that coordinates document retrieval and LLM generation
+- **DocumentRetrievalService**: Handles vector-based document retrieval
+- **LLMService**: Manages LLM interactions via Ollama
+- **ChromaStore**: Vector database abstraction layer
+- **Factories**: Simplify dependency wiring with sensible defaults
 
 ## Configuration System
 
@@ -290,6 +395,95 @@ When adding new features that require configuration values:
 2. For new configuration needs, add them to the appropriate config file
 3. Avoid hardcoding values that might need to change in the future
 4. Use descriptive keys for configuration values
+
+### Default Settings
+
+Centralized configuration in `tapio/config/settings.py`:
+
+```python
+DEFAULT_DIRS = {
+    "CRAWLED_DIR": "content/crawled",   # HTML storage
+    "PARSED_DIR": "content/parsed",     # Markdown storage
+    "CHROMA_DIR": "chroma_db",          # Vector database
+}
+
+DEFAULT_CHROMA_COLLECTION = "tapio"     # ChromaDB collection name
+DEFAULT_EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+DEFAULT_LLM_MODEL = "llama3.2"
+DEFAULT_MAX_TOKENS = 1024
+DEFAULT_NUM_RESULTS = 5
+```
+
+## Site Configurations
+
+Site configurations define how to crawl and parse specific websites. They're stored in `tapio/config/site_configs.yaml` and used by both crawl and parse commands.
+
+### Configuration Structure
+
+```yaml
+sites:
+  migri:
+    base_url: "https://migri.fi"                # Used for crawling and converting relative links
+    description: "Finnish Immigration Service website"
+    crawler_config:                            # Crawling behavior
+      delay_between_requests: 1.0              # Seconds between requests
+      max_concurrent: 3                        # Concurrent request limit
+    parser_config:                              # Parser-specific configuration
+      title_selector: "//title"                # XPath for page titles
+      content_selectors:                       # Priority-ordered content extraction
+        - '//div[@id="main-content"]'
+        - "//main"
+        - "//article"
+        - '//div[@class="content"]'
+      fallback_to_body: true                   # Use <body> if selectors fail
+      markdown_config:                         # HTML-to-Markdown options
+        ignore_links: false
+        body_width: 0                          # No text wrapping
+        protect_links: true
+        unicode_snob: true
+        ignore_images: false
+        ignore_tables: false
+```
+
+### Required vs Optional Fields
+
+**Required:**
+- `base_url` - Base URL for the site (used for crawling and link resolution)
+
+**Optional (with defaults):**
+- `description` - Human-readable description
+- `parser_config` - Parser-specific settings (uses defaults if omitted)
+  - `title_selector` - Page title XPath (default: "//title")
+  - `content_selectors` - XPath selectors for content extraction (default: ["//main", "//article", "//body"])
+  - `fallback_to_body` - Use full-body content if selectors fail (default: true)
+  - `markdown_config` - HTML conversion settings (uses defaults if omitted)
+- `crawler_config` - Crawling behavior settings (uses defaults if omitted)
+  - `delay_between_requests` - Delay between requests in seconds (default: 1.0)
+  - `max_concurrent` - Maximum concurrent requests (default: 5)
+
+### Adding New Sites
+
+1. Analyze the target website's structure
+2. Identify XPath selectors for content extraction
+3. Add configuration to `site_configs.yaml`:
+
+```yaml
+sites:
+  my_site:
+    base_url: "https://example.com"
+    description: "Example site configuration"
+    parser_config:
+      content_selectors:
+        - '//div[@class="main-content"]'
+```
+
+4. Use with commands:
+```bash
+uv run -m tapio.cli crawl my_site
+uv run -m tapio.cli parse my_site
+uv run -m tapio.cli vectorize
+uv run -m tapio.cli tapio-app
+```
 
 ## Ollama for LLM Inference
 
