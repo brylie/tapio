@@ -27,13 +27,13 @@ def mock_embeddings():
     # Typical embedding dimension for all-MiniLM-L6-v2 is 384
     dummy_embedding = [0.1] * 384
 
-    # embed_query returns a single embedding
-    embeddings.embed_query.return_value = dummy_embedding
+    # embed_query returns a single embedding (copy to avoid mutation)
+    embeddings.embed_query.side_effect = lambda _: dummy_embedding.copy()
 
     # embed_documents returns a list of embeddings (one per document)
     # Make it return the appropriate number based on input
     def embed_documents_mock(texts):
-        return [dummy_embedding for _ in texts]
+        return [dummy_embedding.copy() for _ in texts]
 
     embeddings.embed_documents.side_effect = embed_documents_mock
     return embeddings
