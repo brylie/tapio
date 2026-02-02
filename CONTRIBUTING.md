@@ -455,7 +455,7 @@ sites:
 - `parser_config` - Parser-specific settings (uses defaults if omitted)
   - `title_selector` - Page title XPath (default: "//title")
   - `content_selectors` - XPath selectors for content extraction (default: ["//main", "//article", "//body"])
-  - `fallback_to_body` - Use full body content if selectors fail (default: true)
+  - `fallback_to_body` - Use full-body content if selectors fail (default: true)
   - `markdown_config` - HTML conversion settings (uses defaults if omitted)
 - `crawler_config` - Crawling behavior settings (uses defaults if omitted)
   - `delay_between_requests` - Delay between requests in seconds (default: 1.0)
