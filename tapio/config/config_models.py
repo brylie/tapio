@@ -11,6 +11,14 @@ from urllib.parse import urlparse
 
 from pydantic import BaseModel, Field, HttpUrl
 
+from tapio.config.settings import (
+    DEFAULT_CHROMA_COLLECTION,
+    DEFAULT_EMBEDDING_MODEL,
+    DEFAULT_LLM_MODEL,
+    DEFAULT_MAX_TOKENS,
+    DEFAULT_NUM_RESULTS,
+)
+
 
 class HtmlToMarkdownConfig(BaseModel):
     """Configuration settings for HTML to Markdown conversion.
@@ -143,9 +151,9 @@ class RAGConfig:
         ... )
     """
 
-    collection_name: str = "tapio_knowledge"
+    collection_name: str = DEFAULT_CHROMA_COLLECTION
     persist_directory: str = "chroma_db"
-    embedding_model_name: str = "all-MiniLM-L6-v2"
-    llm_model_name: str = "llama3.2"
-    max_tokens: int = 1024
-    num_results: int = 5
+    embedding_model_name: str = DEFAULT_EMBEDDING_MODEL
+    llm_model_name: str = DEFAULT_LLM_MODEL
+    max_tokens: int = DEFAULT_MAX_TOKENS
+    num_results: int = DEFAULT_NUM_RESULTS
