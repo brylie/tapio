@@ -123,5 +123,5 @@ Deploy a Cloudflare Worker that uses the Browser Rendering bindings directly for
 
 - [Cloudflare /crawl endpoint documentation](https://developers.cloudflare.com/browser-rendering/rest-api/crawl-endpoint/)
 - [Browser Rendering REST API setup](https://developers.cloudflare.com/browser-rendering/rest-api/)
-- [Cloudflare Blog: Crawl entire websites with a single API call (March 10, 2026)](https://blog.cloudflare.com/)
+- [Cloudflare Blog: Crawl entire websites with a single API call (March 10, 2026)](https://developers.cloudflare.com/changelog/post/2026-03-10-br-crawl-endpoint/)
 - Related issue: [issues/replace-crawler-with-cloudflare.md](../../issues/replace-crawler-with-cloudflare.md)
