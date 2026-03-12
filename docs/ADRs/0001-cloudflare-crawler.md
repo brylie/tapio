@@ -51,7 +51,7 @@ Replace the bespoke `BaseCrawler`, `CrawlerRunner`, and `Parser` with a new impl
 6. **Update** `CrawlerConfig` model (`tapio/config/config_models.py`) to reflect Cloudflare parameters:
    - Remove: `delay_between_requests`, `max_concurrent` (handled by Cloudflare)
    - Keep: `max_depth` (maps to `depth`)
-   - Add: `limit`, `render`, `source`, `formats`, `include_patterns`, `exclude_patterns`, `max_age`
+   - Add: `limit`, `render`, `source`, `formats`, `options.includePatterns`, `options.excludePatterns`, `maxAge`
 7. **Update** site configurations (`tapio/config/site_configs.yaml`):
    - Remove all `parser_config` sections
    - Add Cloudflare-appropriate crawler defaults
