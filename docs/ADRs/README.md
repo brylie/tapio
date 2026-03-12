@@ -14,7 +14,7 @@ An ADR captures a significant architectural decision made during the project: wh
 
 ADRs are numbered sequentially and given a short descriptive slug:
 
-```
+```text
 NNNN-short-description.md
 ```
 
