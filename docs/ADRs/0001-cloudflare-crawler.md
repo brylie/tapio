@@ -61,7 +61,7 @@ Replace the bespoke `BaseCrawler`, `CrawlerRunner`, and `Parser` with a new impl
 
 ### What stays the same
 
-- CLI interface for the `crawl` command (same arguments and flags)
+- CLI interface for the `crawl` command (same command name and basic structure; flags will change to reflect the updated `CrawlerConfig` — flags for removed fields such as `--delay-between-requests` and `--max-concurrent` are dropped, replaced by new Cloudflare-based parameters such as `--limit`, `--render`, `--source`, and `--formats`)
 - Site configuration structure (`base_url`, `description`)
 - Downstream pipeline: vectorize → RAG app
 - Markdown output saved to `content/{site}/parsed/` with YAML frontmatter
